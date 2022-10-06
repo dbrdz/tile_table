@@ -8,7 +8,7 @@ import '../table/i_tile_jtable.dart';
 import '../table/table_clipboard.dart';
 import 'j_tile_table_view.dart';
 
-typedef LabelBuilder<T> = Widget Function(BuildContext context, IJTileTable<T>);
+typedef LabelBuilder<T> = Widget Function(BuildContext context, String);
 typedef DatasetCellBuilder<T> = Function(BuildContext context, IJTileTable<T> table, IJCell<T> cell, CommitCallback commit, VoidCallback? onTap);
 
 typedef TableTotalBuilder<T> = Widget Function(BuildContext context, IJTileTable<T> table, IJColumn, List<IJCell<T>>);
@@ -26,7 +26,6 @@ class JTileDatasetView<T> extends StatefulWidget {
     required this.columnWidths,
 
     // ------------- TOTALS RELATED PROPS ---------------
-    this.showTableTotals = false,
     this.tableTotalBuilder,
     this.datasetTotalBuilder,
 
@@ -64,7 +63,6 @@ class JTileDatasetView<T> extends StatefulWidget {
   final bool showTableLabels;
   final double tableLabelWidth;
   final ITileDataset<T> dataset;
-  final bool showTableTotals;
 
   final DatasetTotalBuilder<T>? datasetTotalBuilder;
   final TableTotalBuilder<T>? tableTotalBuilder;
@@ -104,8 +102,9 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
   double get _tableLabelWidth => widget.tableLabelWidth;
 
   ITileDataset<T> get _dataset => widget.dataset;
-  bool get _showTableTotals => widget.showTableTotals;
+
   TableTotalBuilder<T>? get _tableTotalBuilder => widget.tableTotalBuilder;
+  DatasetTotalBuilder<T>? get _datasetTotalBuilder => widget.datasetTotalBuilder;
 
   List<double> get _columnWidths => widget.columnWidths;
   double get columnTitleHeight => widget.columnTitleHeight;
@@ -128,7 +127,7 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
 
   final List<IJCell<T>> clipBoard = [];
 
-  double _datasetHeight = 0;
+  List<double> _datasetHeights = [];
   double _datasetWidth = 0;
 
   @override
@@ -139,6 +138,8 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
   @override
   Widget build(BuildContext context) {
     List<IJTileTable<T>> tables = _dataset.dataset;
+    _datasetHeights.clear();
+
     return Column(
       children: [
         ...List.generate(
@@ -149,14 +150,14 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
               table: table,
               backgroundColor: tableBackgroundColor,
               selection: selection,
-              leading: _showTableLabels ? labelBuilder?.call(context, table) : null,
+              cellHeight: cellHeight,
+              columnTitleHeight: columnTitleHeight,
+              leading: _showTableLabels ? labelBuilder?.call(context, table.name) : null,
               showColumns: index == 0 ? true : false,
               onSelect: (IJCell<T> cell) {
                 onSelect?.call(table, cell);
               },
               builder: (BuildContext context, IJTileTable table, Widget datasetWidget, double height, double width) {
-                _datasetHeight += height;
-                _datasetWidth = width;
                 return datasetWidget;
               },
               totalBuilder: _tableTotalBuilder != null
@@ -173,11 +174,32 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
                   }
                   : null,
               columnWidths: _columnWidths,
-              showTotalsRow: _showTableTotals,
             );
           }
       ).toList(),
-      const Divider()
+      if (_datasetTotalBuilder != null)
+        const Divider(),
+      if (_datasetTotalBuilder != null)
+        Row(
+          children: [
+            if (labelBuilder != null)
+              labelBuilder!.call(context, 'total'),
+            ...List.generate(_columnWidths.length, (index) =>
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.black12,
+                    width: .5,
+                  // strokeAlign: StrokeAlign.outside
+                  )
+                ),
+                height: cellHeight,
+                width: _columnWidths[index],
+                child: _datasetTotalBuilder!.call(context, _dataset.dataset.first.columns[index], _dataset.getCellsByStartingPoint(index)),
+              )
+            )
+          ],
+        )
     ]);
   }
 }

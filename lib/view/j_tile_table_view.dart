@@ -21,7 +21,6 @@ class JTileTableView<T> extends StatefulWidget {
     this.builder,
     this.leading,
     this.showColumns = true,
-    this.showTotalsRow = false,
     this.columnWidths = const [],
     this.columnTitleHeight = 45,
     this.cellHeight = 45,
@@ -44,7 +43,6 @@ class JTileTableView<T> extends StatefulWidget {
   final double cellHeight;
 
   final bool showColumns;
-  final bool showTotalsRow;
 
   final ActionButtonBuilder? actionButtonBuilder;
   final ColumnTitleBuilder? columnTitleBuilder;
@@ -80,7 +78,6 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
 
   // ------------- FLAGS ------------------
   bool get _showColumns => widget.showColumns;
-  bool get _showTotalsRow => widget.showTotalsRow;
 
   // ------------- SELECTION PROPS ---------------
   TableClipboard<T>? get selection => widget.selection;
@@ -136,10 +133,6 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
       }
 
       cellsByColumnAndSize.add(cellsMap);
-    }
-
-    if (_actionButtonBuilder != null) {
-      _actionButtonsDrawn = table.columns.map((e) => false).toList();
     }
   }
 
@@ -293,7 +286,7 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
     double tableWidth = columnWidths.reduce((value, element) => value + element);
     double tableHeight = tableBody?.height ?? 0.0;
 
-    if (_showTotalsRow && _totalBuilder != null) {
+    if (_totalBuilder != null) {
       tableHeight += cellHeight;
     }
 
@@ -306,7 +299,7 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         return Row(
           children: [
-            if (tableBody != null || _actionButtonBuilder != null)
+            if (tableBody != null || _totalBuilder != null)
               Container(
                 margin: EdgeInsets.only(top: _showColumns ? columnTitleHeight : 0),
                 height: _showColumns ? tableHeight - columnTitleHeight : tableHeight,
@@ -345,12 +338,12 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
                     // color: Colors.grey,
                     child: Row(
                       children: [
-                        tableBody.widget,
+                        // tableBody.widget,
                       ],
                     ),
                   ),
 
-                if (_showTotalsRow && _totalBuilder != null)
+                if (_totalBuilder != null)
                   Container(
                     decoration: BoxDecoration(
                         color: _backgroundColor ?? Theme.of(context).colorScheme.background,
