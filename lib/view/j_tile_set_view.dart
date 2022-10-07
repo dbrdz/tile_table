@@ -211,8 +211,8 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
                     },
                     actionButtonBuilder: actionButtonBuilder != null
                         ? (context, column, startingAt) {
-                      return actionButtonBuilder!.call(context, table, column, startingAt);
-                    }
+                            return actionButtonBuilder!.call(context, table, column, startingAt);
+                          }
                         : null,
                     columnWidths: _columnWidths,
                   ),

@@ -233,25 +233,26 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                          border: Border.all(color: Colors.black12, width: .5)
-                      ),
-                      child: InkWell(
-                        child: JCellGroupContainer<T>(
-                          selection: selection,
-                          key: UniqueKey(),
-                          cells: cells.whereType<EntryCellWrapper<T>>().map((e) => e.cell).toList(),
-                          cellBuilder: _cellBuilder,
-                          onSelect: (IJCell<T> cell) {
-                            onSelect?.call(cell);
-                          },
-                          commit: refresh,
+                  if (cells.isNotEmpty)
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black12, width: .5)
+                        ),
+                        child: InkWell(
+                          child: JCellGroupContainer<T>(
+                            selection: selection,
+                            key: UniqueKey(),
+                            cells: cells.whereType<EntryCellWrapper<T>>().map((e) => e.cell).toList(),
+                            cellBuilder: _cellBuilder,
+                            onSelect: (IJCell<T> cell) {
+                              onSelect?.call(cell);
+                            },
+                            commit: refresh,
+                          ),
                         ),
                       ),
                     ),
-                  ),
                   if (cells.whereType<ActionButtonWrapper>().isNotEmpty)
                     buildActionButton(context, cellsStartingAt),
                   if (subsection != null)
@@ -338,7 +339,7 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
                     // color: Colors.grey,
                     child: Row(
                       children: [
-                        // tableBody.widget,
+                        tableBody.widget,
                       ],
                     ),
                   ),
