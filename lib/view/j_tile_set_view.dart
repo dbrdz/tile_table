@@ -15,7 +15,7 @@ typedef TableTotalBuilder<T> = Widget Function(BuildContext context, IJTileTable
 typedef DatasetTotalBuilder<T> = Widget Function(BuildContext context, IJColumn, List<IJCell<T>>);
 typedef ActionButtonBuilder<T> = Widget Function(
     BuildContext context, IJTileTable<T> table, IJColumn, int cellStartingAt
-  );
+    );
 
 typedef OnCellSelect<T> = Function(IJTileTable<T> table, IJCell<T> cell);
 typedef DatasetBuilder<T> = Widget Function(BuildContext context, JTileDataset dataset, Widget datasetWidget, double width, double height);
@@ -140,66 +140,126 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
     List<IJTileTable<T>> tables = _dataset.dataset;
     _datasetHeights.clear();
 
+    final double tableWidth = _columnWidths.reduce((value, element) => value + element);
+
+    /// --------------------- TABLE BODY  ---------------------------------- ///
     return Column(
-      children: [
-        ...List.generate(
-          tables.length,
-          (index) {
-            IJTileTable<T> table = tables[index];
-            return JTileTableView<T>(
-              table: table,
-              backgroundColor: tableBackgroundColor,
-              selection: selection,
-              cellHeight: cellHeight,
-              columnTitleHeight: columnTitleHeight,
-              leading: _showTableLabels ? labelBuilder?.call(context, table.name) : null,
-              showColumns: index == 0 ? true : false,
-              onSelect: (IJCell<T> cell) {
-                onSelect?.call(table, cell);
-              },
-              builder: (BuildContext context, IJTileTable table, Widget datasetWidget, double height, double width) {
-                return datasetWidget;
-              },
-              totalBuilder: _tableTotalBuilder != null
-                  ? (context, column, columnCells) => _tableTotalBuilder!.call(context, table, column, columnCells)
-                  : null,
-              columnTitleBuilder: _columnTitleBuilder,
-              cellBuilder: (BuildContext context, IJCell<T> cell, CommitCallback commit, VoidCallback? onTap) {
-                return cellBuilder?.call(context, table, cell, commit, onTap) ??
-                    Text(cell.value.toString());
-              },
-              actionButtonBuilder: actionButtonBuilder != null
-                  ? (context, column, startingAt) {
-                    return actionButtonBuilder!.call(context, table, column, startingAt);
-                  }
-                  : null,
-              columnWidths: _columnWidths,
-            );
-          }
-      ).toList(),
-      if (_datasetTotalBuilder != null)
-        const Divider(),
-      if (_datasetTotalBuilder != null)
-        Row(
-          children: [
-            if (labelBuilder != null)
-              labelBuilder!.call(context, 'total'),
-            ...List.generate(_columnWidths.length, (index) =>
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.black12,
-                    width: .5,
-                  // strokeAlign: StrokeAlign.outside
-                  )
-                ),
-                height: cellHeight,
-                width: _columnWidths[index],
-                child: _datasetTotalBuilder!.call(context, _dataset.dataset.first.columns[index], _dataset.getCellsByStartingPoint(index)),
-              )
+        children: [
+          SizedBox(
+            // color: Colors.green,
+            height: columnTitleHeight,
+            width: _columnWidths.reduce((value, element) => value + element),
+            child: Row(
+                children: List.generate(
+                    tables.first.columns.length,
+                        (index) {
+                      final IJColumn column = tables.first.columns[index];
+                      return Container(
+                        alignment: Alignment.center,
+                        width: _columnWidths[index],
+                        height: columnTitleHeight,
+                        child: _columnTitleBuilder?.call(context, column) ?? Text(column.title),
+                      );
+                    }
+                )
+            ),
+          ),
+          ...List.generate(
+              tables.length,
+                  (index) {
+                IJTileTable<T> table = tables[index];
+                return [
+                  SizedBox(
+                    height: 30,
+                    width: tableWidth,
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Divider(),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                          child: Text(table.name),
+                        ),
+                        const Expanded(
+                          child: Divider(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  JTileTableView<T>(
+                    table: table,
+                    backgroundColor: tableBackgroundColor,
+                    selection: selection,
+                    cellHeight: cellHeight,
+                    columnTitleHeight: columnTitleHeight,
+                    leading: _showTableLabels ? labelBuilder?.call(context, table.name) : null,
+                    showColumns: false,
+                    onSelect: (IJCell<T> cell) {
+                      onSelect?.call(table, cell);
+                    },
+                    builder: (BuildContext context, IJTileTable table, Widget datasetWidget, double height, double width) {
+                      return datasetWidget;
+                    },
+                    totalBuilder: _tableTotalBuilder != null
+                        ? (context, column, columnCells) => _tableTotalBuilder!.call(context, table, column, columnCells)
+                        : null,
+                    columnTitleBuilder: _columnTitleBuilder,
+                    cellBuilder: (BuildContext context, IJCell<T> cell, CommitCallback commit, VoidCallback? onTap) {
+                      return cellBuilder?.call(context, table, cell, commit, onTap) ??
+                          Text(cell.value.toString());
+                    },
+                    actionButtonBuilder: actionButtonBuilder != null
+                        ? (context, column, startingAt) {
+                      return actionButtonBuilder!.call(context, table, column, startingAt);
+                    }
+                        : null,
+                    columnWidths: _columnWidths,
+                  ),
+                ];
+              }
+          ).expand((element) => element).toList(),
+          if (_datasetTotalBuilder != null)
+            SizedBox(
+              height: 30,
+              width: tableWidth,
+              child: Row(
+                children: const [
+                  Expanded(
+                    child:  Divider(),
+                  ),
+                  Text("Totals"),
+                  Expanded(
+                    child:  Divider(),
+                  ),
+                ],
+              ),
+            ),
+
+          /// --------------------- DATASET TOTAL BUILDER ---------------------- ///
+          if (_datasetTotalBuilder != null)
+            Row(
+              children: [
+                if (labelBuilder != null)
+                  labelBuilder!.call(context, 'total'),
+                ...List.generate(_columnWidths.length, (index) =>
+                    Container(
+                      decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.black12,
+                            width: .5,
+                            // strokeAlign: StrokeAlign.outside
+                          )
+                      ),
+                      height: cellHeight,
+                      width: _columnWidths[index],
+                      child: _datasetTotalBuilder!.call(context, _dataset.dataset.first.columns[index], _dataset.getCellsByStartingPoint(index)),
+                    )
+                )
+              ],
             )
-          ],
-        )
-    ]);
+
+          /// --------------------- DATASET FOOTER ----------------------------- ///
+        ]);
   }
 }

@@ -273,8 +273,8 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
     );
 
     return TableSectionInfo(
-        widget: sectionWidget,
-        height: totalHeight
+      widget: sectionWidget,
+      height: totalHeight
     );
   }
 
