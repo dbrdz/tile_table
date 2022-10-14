@@ -145,9 +145,6 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
     return Container(
       height: cellHeight,
       width: columnWidths[index],
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.black12, width: .5)
-      ),
       child: _actionButtonBuilder!.call(context, table.columns[index], index),
     );
   }
@@ -237,19 +234,18 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black12, width: .5)
+                            // border: Border.all(color: Colors.black12, width: .5)
                         ),
-                        child: InkWell(
-                          child: JCellGroupContainer<T>(
-                            selection: selection,
-                            key: UniqueKey(),
-                            cells: cells.whereType<EntryCellWrapper<T>>().map((e) => e.cell).toList(),
-                            cellBuilder: _cellBuilder,
-                            onSelect: (IJCell<T> cell) {
-                              onSelect?.call(cell);
-                            },
-                            commit: refresh,
-                          ),
+                        child: JCellGroupContainer<T>(
+                          selection: selection,
+                          key: UniqueKey(),
+                          cells: cells.whereType<EntryCellWrapper<T>>().map((e) => e.cell).toList(),
+                          cellBuilder: _cellBuilder,
+                          cellHeight: cellHeight,
+                          onSelect: (IJCell<T> cell) {
+                            onSelect?.call(cell);
+                          },
+                          commit: refresh,
                         ),
                       ),
                     ),
@@ -331,8 +327,8 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
                 if (tableBody != null)
                   Container(
                     decoration: BoxDecoration(
-                        color: _backgroundColor ?? Theme.of(context).colorScheme.background,
-                        border: Border.all(color: Colors.black12, strokeAlign: StrokeAlign.inside)
+                        color: _backgroundColor,
+                        // border: Border.all(color: Colors.black12, strokeAlign: StrokeAlign.inside)
                     ),
                     height: tableBody.height + 2,
                     width: tableWidth + 2,

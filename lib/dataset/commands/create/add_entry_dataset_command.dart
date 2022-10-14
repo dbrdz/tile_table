@@ -4,17 +4,17 @@ import '../../../cell/i_jcell.dart';
 import '../../i_tile_dataset.dart';
 import '../i_j_dataset_command.dart';
 
-class AddEntriesDatasetCommand extends IJDatasetCommand {
+class AddEntriesDatasetCommand<T> extends IJDatasetCommand<T> {
 
   AddEntriesDatasetCommand({ required this.entries, required this.index });
 
-  final List<IJCell> entries;
+  final List<IJCell<T>> entries;
   final int index;
 
-  ITileDataset? _cachedDataset;
+  ITileDataset<T>? _cachedDataset;
 
   @override
-  Future<bool> execute(ITileDataset element) {
+  Future<bool> execute(ITileDataset<T> element) {
     _cachedDataset = element;
     if (index < element.dataset.length && index >= 0) {
       return Future(() {

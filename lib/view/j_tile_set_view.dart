@@ -84,7 +84,7 @@ class JTileDatasetView<T> extends StatefulWidget {
   // ------------- ACTION BUTTON PROPS ----------
   final ActionButtonBuilder<T>? actionButtonBuilder;
 
-  final TileTableBuilder? builder;
+  final DatasetBuilder? builder;
 
   // ------------- STYLING PROPS ----------------
   final Color? tableBackgroundColor;
@@ -113,7 +113,7 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
   double get cellHeight => widget.cellHeight;
   DatasetCellBuilder<T>? get cellBuilder => widget.cellBuilder;
 
-  TileTableBuilder? get _builder => widget.builder;
+  DatasetBuilder? get _builder => widget.builder;
 
   // ------------- SELECTION PROPS ----------
   OnCellSelect<T>? get onSelect => widget.onSelect;
@@ -145,8 +145,9 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
     /// --------------------- TABLE BODY  ---------------------------------- ///
     return Column(
         children: [
-          SizedBox(
+          Container(
             // color: Colors.green,
+            padding: EdgeInsets.only(left: _showTableLabels ? _tableLabelWidth : 0.0),
             height: columnTitleHeight,
             width: _columnWidths.reduce((value, element) => value + element),
             child: Row(
@@ -177,13 +178,13 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
                         const Expanded(
                           child: Divider(),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                          child: Text(table.name),
-                        ),
-                        const Expanded(
-                          child: Divider(),
-                        ),
+                        // Padding(
+                        //   padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                        //   child: Text(table.name),
+                        // ),
+                        // const Expanded(
+                        //   child: Divider(),
+                        // ),
                       ],
                     ),
                   ),
@@ -243,14 +244,7 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
                 if (labelBuilder != null)
                   labelBuilder!.call(context, 'total'),
                 ...List.generate(_columnWidths.length, (index) =>
-                    Container(
-                      decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.black12,
-                            width: .5,
-                            // strokeAlign: StrokeAlign.outside
-                          )
-                      ),
+                    SizedBox(
                       height: cellHeight,
                       width: _columnWidths[index],
                       child: _datasetTotalBuilder!.call(context, _dataset.dataset.first.columns[index], _dataset.getCellsByStartingPoint(index)),

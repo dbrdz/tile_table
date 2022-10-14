@@ -58,7 +58,7 @@ class JTileDataset<T> extends ITileDataset<T>  {
   @override
   List<IJCell<T>> getCellsByStartingPoint(int startingPoint) {
     return dataset.expand((element) => element.cells)
-      .where((element) => element.location.size == startingPoint)
+      .where((element) => element.location.contains(JPosition(start: startingPoint, size: 1)))
       .toList();
   }
 

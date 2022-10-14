@@ -13,6 +13,7 @@ class JCellGroupContainer<T> extends StatefulWidget {
     Key? key,
     required this.cells,
     required this.commit,
+    required this.cellHeight,
     this.selection,
     this.cellBuilder,
 
@@ -22,6 +23,7 @@ class JCellGroupContainer<T> extends StatefulWidget {
     this.onAdd,
   }) : super(key: key);
 
+  final double cellHeight;
   final CellBuilder<T>? cellBuilder;
   final CommitCallback commit;
   final List<IJCell<T>> cells;
@@ -46,6 +48,8 @@ class JCellGroupContainerState<T> extends State<JCellGroupContainer<T>> {
   CellBuilder<T>? get cellBuilder => widget.cellBuilder;
   CommitCallback get _commit => widget.commit;
   List<IJCell<T>> get _initialList => widget.cells;
+
+  double get cellHeight => widget.cellHeight;
 
   // ------------------- INTERNAL STATE --------------
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
@@ -86,28 +90,27 @@ class JCellGroupContainerState<T> extends State<JCellGroupContainer<T>> {
     }
 
     Widget cellContainer = Container(
-        decoration: BoxDecoration(
-            color: isSelected ? selectionColor : Colors.white,
-            border: cellBorder
-        ),
-        child: cellChild
+      height: cellHeight,
+      decoration: BoxDecoration(
+      // color: isSelected ? selectionColor : Colors.white,
+      //   border: cellBorder
+      ),
+      child: cellChild
     );
 
-    if (isCopied) {
-      cellContainer = DottedBorder(
-        color: Theme.of(context).colorScheme.primary,
-        dashPattern: const [3, 3],
-        strokeWidth: 3,
-        child: cellChild,
-      );
-    }
+    // if (isCopied) {
+    //   cellContainer = DottedBorder(
+    //     color: Theme.of(context).colorScheme.primary,
+    //     dashPattern: const [3, 3],
+    //     strokeWidth: 3,
+    //     child: cellChild,
+    //   );
+    // }
 
     return SizeTransition(
         key: ValueKey(index),
         sizeFactor: animation,
-        child: InkWell(
-          child: cellContainer
-        ),
+        child: cellContainer
     );
   }
 
