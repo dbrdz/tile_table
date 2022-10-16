@@ -142,14 +142,14 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
 
     final double tableWidth = _columnWidths.reduce((value, element) => value + element);
 
-    /// --------------------- TABLE BODY  ---------------------------------- ///
     return Column(
         children: [
+          /// --------------------- COLUMN ROW ---------------------------------- ///
           Container(
             // color: Colors.green,
-            padding: EdgeInsets.only(left: _showTableLabels ? _tableLabelWidth : 0.0),
+            margin: EdgeInsets.only(left: _showTableLabels ? _tableLabelWidth : 0.0),
             height: columnTitleHeight,
-            width: _columnWidths.reduce((value, element) => value + element),
+            width: tableWidth,
             child: Row(
                 children: List.generate(
                     tables.first.columns.length,
@@ -188,6 +188,7 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
                       ],
                     ),
                   ),
+                  /// --------------------- TABLE BODY  ---------------------------------- ///
                   JTileTableView<T>(
                     table: table,
                     backgroundColor: tableBackgroundColor,
