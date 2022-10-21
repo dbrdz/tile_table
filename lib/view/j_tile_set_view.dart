@@ -16,7 +16,7 @@ typedef DatasetTotalBuilder<T> = Widget Function(BuildContext context, IJColumn,
 typedef ActionButtonBuilder<T> = Widget Function(
     BuildContext context, IJTileTable<T> table, IJColumn, int cellStartingAt
     );
-
+typedef EmptyStateBuilder<T> = Widget Function(BuildContext context, IJTileTable<T> table);
 typedef OnCellSelect<T> = Function(IJTileTable<T> table, IJCell<T> cell);
 typedef DatasetBuilder<T> = Widget Function(BuildContext context, JTileDataset dataset, Widget datasetWidget, double width, double height);
 
@@ -37,6 +37,7 @@ class JTileDatasetView<T> extends StatefulWidget {
     // ------------- LABEL RELATED PROPS ---------------
     this.labelBuilder,
     this.showTableLabels = true,
+    this.showTableDividers = false,
     this.tableLabelWidth = 100,
 
     // ------------- CELL RELATED PROPS ---------------
@@ -54,8 +55,10 @@ class JTileDatasetView<T> extends StatefulWidget {
     this.tableBackgroundColor,
 
     // ------------- TABLE BUILDER --------------------
-    this.builder
+    this.builder,
 
+    // ------------- EMPTY STATE BUILDER --------------------
+    this.emptyStateBuilder
 
   }) : super(key: key);
 
@@ -85,9 +88,13 @@ class JTileDatasetView<T> extends StatefulWidget {
   final ActionButtonBuilder<T>? actionButtonBuilder;
 
   final DatasetBuilder? builder;
+  // ------------- DIVIDERS
+  final bool showTableDividers;
 
   // ------------- STYLING PROPS ----------------
   final Color? tableBackgroundColor;
+
+  final EmptyStateBuilder? emptyStateBuilder;
 
   @override
   State<StatefulWidget> createState() {
@@ -125,6 +132,12 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
   // ------------- CUSTOMIZATION RELATED PROPS ------
   Color? get tableBackgroundColor => widget.tableBackgroundColor;
 
+  // ------------- DIVIDERS
+  bool get _showTableDividers => widget.showTableDividers;
+
+  // ------------- EMPTY STATE BUILDER
+  EmptyStateBuilder? get _emptyStateBuilder => widget.emptyStateBuilder;
+
   final List<IJCell<T>> clipBoard = [];
 
   List<double> _datasetHeights = [];
@@ -143,6 +156,7 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
     final double tableWidth = _columnWidths.reduce((value, element) => value + element);
 
     return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           /// --------------------- COLUMN ROW ---------------------------------- ///
           Container(
@@ -170,24 +184,22 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
                   (index) {
                 IJTileTable<T> table = tables[index];
                 return [
-                  SizedBox(
-                    height: 30,
-                    width: tableWidth,
-                    child: Row(
-                      children: [
-                        const Expanded(
-                          child: Divider(),
-                        ),
-                        // Padding(
-                        //   padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                        //   child: Text(table.name),
-                        // ),
-                        // const Expanded(
-                        //   child: Divider(),
-                        // ),
-                      ],
+                  // It doesn't make sense to show the divider lines if the table body is empty. Whenever
+                  // there is something in the table body being rendered then we can show the divider lines,
+                  // this only happens whenere there is a defined empty state, when there is some data or when an action button is defined
+                  if (_showTableDividers && (table.cells.isNotEmpty || _emptyStateBuilder != null || actionButtonBuilder != null))
+                    Container(
+                      height: 30,
+                      width: tableWidth,
+                      margin: EdgeInsets.only(left: _showTableLabels ? _tableLabelWidth : 0.0),
+                      child: Row(
+                        children: const [
+                          Expanded(
+                            child: Divider(),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
                   /// --------------------- TABLE BODY  ---------------------------------- ///
                   JTileTableView<T>(
                     table: table,
@@ -217,20 +229,18 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
                           }
                         : null,
                     columnWidths: _columnWidths,
+                    emptyState: _emptyStateBuilder?.call(context, table),
                   ),
                 ];
               }
           ).expand((element) => element).toList(),
           if (_datasetTotalBuilder != null)
-            SizedBox(
+            Container(
               height: 30,
+              margin: EdgeInsets.only(left: _showTableLabels ? _tableLabelWidth : 0.0),
               width: tableWidth,
               child: Row(
                 children: const [
-                  Expanded(
-                    child:  Divider(),
-                  ),
-                  Text("Totals"),
                   Expanded(
                     child:  Divider(),
                   ),

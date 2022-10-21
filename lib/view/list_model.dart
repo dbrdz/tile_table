@@ -35,11 +35,10 @@ class ListModel<E> {
     final E removedItem = _items.removeAt(index);
     // callback();
     if (removedItem != null) {
-      _animatedList!.removeItem(
-          index,  (BuildContext context, Animation<double> animation) {
-        return removedItemBuilder(removedItem, context, animation);
-      },
-          duration: animationDuration
+      _animatedList!.removeItem(index,  (BuildContext context, Animation<double> animation) {
+          return removedItemBuilder(removedItem, context, animation);
+        },
+        duration: animationDuration
       );
     }
     return removedItem;

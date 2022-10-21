@@ -31,6 +31,7 @@ class JTileTableView<T> extends StatefulWidget {
     this.backgroundColor,
     this.selection,
     this.onSelect,
+    this.emptyState
   }) : super(key: key);
 
   final IJTileTable<T> table;
@@ -53,6 +54,7 @@ class JTileTableView<T> extends StatefulWidget {
   final TableClipboard<T>? selection;
   final CellCallback<T>? onSelect;
 
+  final Widget? emptyState;
 
   final Color? backgroundColor;
 
@@ -99,6 +101,8 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
   // A list that tells the table builder which columns have already action buttons.
   List<bool>? _actionButtonsDrawn;
   final List<CellWrapper> _processedCells = [];
+
+  Widget? get _emptyState => widget.emptyState;
 
   @override
   void initState() {
@@ -193,7 +197,7 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
 
     TableSectionInfo? lowerSection = buildTableSection(cellsStartingAt, parentPosition);
 
-    double mainSectionHeight = cellHeight * cells.length + ((cells.length - 1)) + (subsection?.height ?? 0); // + (actionButtons.bottomActionButton?.height ?? 0);
+    double mainSectionHeight = cellHeight * cells.length.clamp(1, double.infinity) + ((cells.length - 1)) + (subsection?.height ?? 0); // + (actionButtons.bottomActionButton?.height ?? 0);
     double adjacentSectionHeight = (adjacentSection?.height ?? 0); // + (actionButtons.adjacentActionButton?.height ?? 0);
     double lowerSectionHeight = lowerSection?.height ?? 0;
 
@@ -214,59 +218,55 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
           .reduce((value, element) => value + element);
     }
 
-    Widget sectionWidget = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              height: mainSectionHeight,
-              width: sectionWidth,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (cells.isNotEmpty)
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                            // border: Border.all(color: Colors.black12, width: .5)
-                        ),
-                        child: JCellGroupContainer<T>(
-                          selection: selection,
-                          key: UniqueKey(),
-                          cells: cells.whereType<EntryCellWrapper<T>>().map((e) => e.cell).toList(),
-                          cellBuilder: _cellBuilder,
-                          cellHeight: cellHeight,
-                          onSelect: (IJCell<T> cell) {
-                            onSelect?.call(cell);
-                          },
-                          commit: refresh,
-                        ),
+    Widget sectionWidget = SizedBox(
+      height: totalHeight,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 350),
+                width: sectionWidth,
+                height: mainSectionHeight,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (cells.isNotEmpty)
+                      JCellGroupContainer<T>(
+                        selection: selection,
+                        key: UniqueKey(),
+                        cells: cells.whereType<EntryCellWrapper<T>>().map((e) => e.cell).toList(),
+                        cellBuilder: _cellBuilder,
+                        cellHeight: cellHeight,
+                        onSelect: (IJCell<T> cell) {
+                          onSelect?.call(cell);
+                        },
+                        commit: refresh,
                       ),
-                    ),
-                  if (cells.whereType<ActionButtonWrapper>().isNotEmpty)
-                    buildActionButton(context, cellsStartingAt),
-                  if (subsection != null)
-                    subsection.widget,
-                  // if (actionButtons.bottomActionButton != null)
-                  //   actionButtons.bottomActionButton!.widget,
-                ],
+                    if (cells.whereType<ActionButtonWrapper>().isNotEmpty)
+                      buildActionButton(context, cellsStartingAt),
+                    if (subsection != null)
+                      subsection.widget,
+                  ],
+                ),
               ),
-            ),
-            if (adjacentSection != null)
-              adjacentSection.widget,
-            // if (actionButtons.adjacentActionButton != null)
-            //   actionButtons.adjacentActionButton!.widget,
-          ],
-        ),
-        if (lowerSection != null)
-          lowerSection.widget
-      ],
+              if (adjacentSection != null)
+                adjacentSection.widget,
+            ],
+          ),
+
+          if (lowerSection != null)
+            SizedBox(
+              height: lowerSectionHeight,
+              child: lowerSection.widget
+            )
+        ],
+      ),
     );
 
     return TableSectionInfo(
@@ -291,44 +291,46 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
       tableHeight += columnTitleHeight;
     }
 
-    Widget tableWidget = StreamBuilder(
-      stream: table.commandRx,
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        return Row(
-          children: [
-            if (tableBody != null || _totalBuilder != null)
-              Container(
-                margin: EdgeInsets.only(top: _showColumns ? columnTitleHeight : 0),
-                height: _showColumns ? tableHeight - columnTitleHeight : tableHeight,
-                child: _leading,
-              ),
-            Column(
-              children: [
-                if (_showColumns)
-                  SizedBox(
-                    // color: Colors.green,
-                    height: columnTitleHeight,
-                    width: tableWidth,
-                    child: Row(
-                        children: List.generate(
-                            table.columns.length,
-                                (index) {
-                              final IJColumn column = table.columns[index];
-                              return Container(
-                                alignment: Alignment.center,
-                                width: columnWidths[index],
-                                height: columnTitleHeight,
-                                child: _columnTitleBuilder?.call(context, column) ?? Text(column.title),
-                              );
-                            }
-                        )
+    Widget tableWidget = SizedBox(
+      height: tableHeight + 2,
+      child: StreamBuilder(
+        stream: table.commandRx,
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          return Row(
+            children: [
+              if (tableBody != null || _totalBuilder != null)
+                Container(
+                  margin: EdgeInsets.only(top: _showColumns ? columnTitleHeight : 0),
+                  height: _showColumns ? tableHeight - columnTitleHeight : tableHeight,
+                  child: _leading,
+                ),
+              Column(
+                children: [
+                  if (_showColumns)
+                    SizedBox(
+                      // color: Colors.green,
+                      height: columnTitleHeight,
+                      width: tableWidth,
+                      child: Row(
+                          children: List.generate(
+                              table.columns.length,
+                                  (index) {
+                                final IJColumn column = table.columns[index];
+                                return Container(
+                                  alignment: Alignment.center,
+                                  width: columnWidths[index],
+                                  height: columnTitleHeight,
+                                  child: _columnTitleBuilder?.call(context, column) ?? Text(column.title),
+                                );
+                              }
+                          )
+                      ),
                     ),
-                  ),
-                if (tableBody != null)
-                  Container(
+                  tableBody != null
+                      ?  Container(
                     decoration: BoxDecoration(
-                        color: _backgroundColor,
-                        // border: Border.all(color: Colors.black12, strokeAlign: StrokeAlign.inside)
+                      color: _backgroundColor,
+                      // border: Border.all(color: Colors.black12, strokeAlign: StrokeAlign.inside)
                     ),
                     height: tableBody.height + 2,
                     width: tableWidth + 2,
@@ -338,42 +340,44 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
                         tableBody.widget,
                       ],
                     ),
-                  ),
+                  )
+                      : _emptyState ?? Container(),
 
-                if (_totalBuilder != null)
-                  Container(
-                    decoration: BoxDecoration(
-                        color: _backgroundColor ?? Theme.of(context).colorScheme.background,
-                        border: Border.all(
-                            color: Colors.black12,
-                            strokeAlign: StrokeAlign.outside
-                        )
-                    ),
-                    height: cellHeight,
-                    width: tableWidth,
-                    child: Row(
-                        children: table.columns.map((e) => Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                  color: Colors.black12,
-                                  width: .5,
-                                  // strokeAlign: StrokeAlign.outside
+                  if (_totalBuilder != null)
+                    Container(
+                      decoration: BoxDecoration(
+                          color: _backgroundColor ?? Theme.of(context).colorScheme.background,
+                          border: Border.all(
+                              color: Colors.black12,
+                              strokeAlign: StrokeAlign.outside
+                          )
+                      ),
+                      height: cellHeight,
+                      width: tableWidth,
+                      child: Row(
+                          children: table.columns.map((e) => Container(
+                              decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.black12,
+                                    width: .5,
+                                    // strokeAlign: StrokeAlign.outside
+                                  )
+                              ),
+                              width: columnWidths[e.index],
+                              child: _totalBuilder!.call(
+                                  context,
+                                  e,
+                                  table.cells.where((element) => element.location.contains(e.location)).toList()
                               )
-                            ),
-                            width: columnWidths[e.index],
-                            child: _totalBuilder!.call(
-                                context,
-                                e,
-                                table.cells.where((element) => element.location.contains(e.location)).toList()
-                            )
-                        )).toList()
+                          )).toList()
+                      ),
                     ),
-                  ),
-              ],
-            )
-          ],
-        );
-      },
+                ],
+              )
+            ],
+          );
+        },
+      ),
     );
 
     return _builder?.call(context, table, tableWidget, tableHeight, tableWidth) ?? tableWidget;
