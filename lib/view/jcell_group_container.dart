@@ -86,7 +86,7 @@ class JCellGroupContainerState<T> extends State<JCellGroupContainer<T>> {
 
     Border? cellBorder;
     if (isSelected) {
-      cellBorder = Border.all(color: Theme.of(context).colorScheme.primary, strokeAlign: StrokeAlign.inside);
+      cellBorder = Border.all(color: Theme.of(context).colorScheme.primary, strokeAlign: BorderSide.strokeAlignInside);
     }
 
     Widget cellContainer = Container(

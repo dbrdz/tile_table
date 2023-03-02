@@ -349,7 +349,7 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
                           color: _backgroundColor ?? Theme.of(context).colorScheme.background,
                           border: Border.all(
                               color: Colors.black12,
-                              strokeAlign: StrokeAlign.outside
+                              strokeAlign: BorderSide.strokeAlignInside
                           )
                       ),
                       height: cellHeight,
