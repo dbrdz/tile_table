@@ -114,9 +114,9 @@ class JTileTable<T> extends IJTileTable<T> {
 
   static JTileTable<T> fromJson<T>(Map<String, dynamic> json, ValueDeserializer<T> valueDeserializer) {
     return JTileTable<T>(
-        name: json["name"],
-        columns: json["columns"].map<IJColumn>((e) => JColumn.fromJson(e)).toList(),
-        cells: (json["cells"] as Iterable<dynamic>).map<IJCell<T>>((e) => JCell.fromJson<T>(e, valueDeserializer)).toList()
+      name: json["name"],
+      columns: json["columns"].map<IJColumn>((e) => JColumn.fromJson(e)).toList(),
+      cells: (json["cells"] as Iterable<dynamic>).map<IJCell<T>>((e) => JCell.fromJson<T>(e, valueDeserializer)).toList()
     );
   }
 
@@ -126,10 +126,8 @@ class JTileTable<T> extends IJTileTable<T> {
   }
 
   @override
-  // TODO: implement deserializer
   ValueDeserializer get deserializer => throw UnimplementedError();
 
   @override
-  // TODO: implement serializer
   ValueSerializer get serializer => throw UnimplementedError();
 }

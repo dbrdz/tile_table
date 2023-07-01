@@ -21,6 +21,7 @@ class JTileTableView<T> extends StatefulWidget {
     this.builder,
     this.leading,
     this.showColumns = true,
+    this.columnsToShow,
     this.columnWidths = const [],
     this.columnTitleHeight = 45,
     this.cellHeight = 45,
@@ -44,6 +45,7 @@ class JTileTableView<T> extends StatefulWidget {
   final double cellHeight;
 
   final bool showColumns;
+  final List<int>? columnsToShow;
 
   final ActionButtonBuilder? actionButtonBuilder;
   final ColumnTitleBuilder? columnTitleBuilder;
@@ -80,13 +82,14 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
 
   // ------------- FLAGS ------------------
   bool get _showColumns => widget.showColumns;
+  List<int>? get _columnsToShow => widget.columnsToShow;
 
   // ------------- SELECTION PROPS ---------------
   TableClipboard<T>? get selection => widget.selection;
   CellCallback<T>? get onSelect => widget.onSelect;
 
   // ------------- STYLING PROPS ------------------
-  List<double> get columnWidths => widget.columnWidths;
+  List<double>? get columnWidths => widget.columnWidths;
   double get columnTitleHeight => widget.columnTitleHeight;
   double get cellHeight => widget.cellHeight;
   Color? get _backgroundColor => widget.backgroundColor;
@@ -104,11 +107,30 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
 
   Widget? get _emptyState => widget.emptyState;
 
+  List<double> get _computedColumnWidths {
+    List<double> widths = [];
+    if (columnWidths == null) {
+      widths.addAll(List.generate(table.columns.length, (index) => 200));
+    } else {
+      widths.addAll(columnWidths!);
+    }
+
+    if (_columnsToShow != null) {
+      widths = List.generate(widths.length, (index) {
+        if (_columnsToShow != null) {
+          if (_columnsToShow!.contains(index)) {
+            return widths[index];
+          }
+          return 0;
+        }
+        return widths[index];
+      });
+    }
+    return widths;
+  }
+
   @override
   void initState() {
-    if (columnWidths.isEmpty) {
-      columnWidths.addAll(List.generate(table.columns.length, (index) => 200));
-    }
     super.initState();
   }
 
@@ -126,6 +148,12 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
       final List<IJCell<T>> columnCells = table.getCellsByStartingPoint(i);
 
       for (var cell in columnCells) {
+        if (_columnsToShow != null) {
+          if (!_columnsToShow!.any((columnIndex) => cell.location.contains(JPosition(start: columnIndex, size: 1)))) {
+            continue;
+          }
+        }
+
         final int size = cell.location.size;
         List<CellWrapper> sizeList = cellsMap.putIfAbsent(size, () => []);
         sizeList.add(
@@ -133,7 +161,9 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
         );
       }
       if (_actionButtonBuilder != null) {
-        cellsMap.putIfAbsent(1, () => []).add(ActionButtonWrapper());
+        if (_columnsToShow?.contains(i) ?? true) {
+          cellsMap.putIfAbsent(1, () => []).add(ActionButtonWrapper());
+        }
       }
 
       cellsByColumnAndSize.add(cellsMap);
@@ -146,9 +176,9 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
   }
 
   Widget buildActionButton(BuildContext context, int index) {
-    return Container(
+    return SizedBox(
       height: cellHeight,
-      width: columnWidths[index],
+      width: _computedColumnWidths[index],
       child: _actionButtonBuilder!.call(context, table.columns[index], index),
     );
   }
@@ -156,7 +186,7 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
   TableSectionInfo? buildTableSection(int cellsStartingAt, JPosition? parentPosition, { bool buildSubsection = true, bool buildAdjacent = true }) {
 
     if (
-    (cellsStartingAt == cellsByColumnAndSize.length ||
+    (cellsStartingAt >= cellsByColumnAndSize.length ||
         cellsByColumnAndSize.every((element) => element.isEmpty))
     ) {
       return null;
@@ -211,10 +241,10 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
     late double sectionWidth;
 
     if (currentCellSize == 0) {
-      sectionWidth = columnWidths[cellsStartingAt];
+      sectionWidth = _computedColumnWidths[cellsStartingAt];
     } else {
-      sectionWidth = columnWidths.getRange(cellsStartingAt,
-          (cellsStartingAt + currentCellSize).clamp(1, columnWidths.length))
+      sectionWidth = _computedColumnWidths.getRange(cellsStartingAt,
+          (cellsStartingAt + currentCellSize).clamp(1, _computedColumnWidths.length))
           .reduce((value, element) => value + element);
     }
 
@@ -280,7 +310,7 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
     _buildColumnCellMap();
 
     TableSectionInfo? tableBody = buildTableSection(0, null);
-    double tableWidth = columnWidths.reduce((value, element) => value + element);
+    double tableWidth = _computedColumnWidths.reduce((value, element) => value + element);
     double tableHeight = tableBody?.height ?? 0.0;
 
     if (_totalBuilder != null) {
@@ -318,7 +348,7 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
                                 final IJColumn column = table.columns[index];
                                 return Container(
                                   alignment: Alignment.center,
-                                  width: columnWidths[index],
+                                  width: _computedColumnWidths[index],
                                   height: columnTitleHeight,
                                   child: _columnTitleBuilder?.call(context, column) ?? Text(column.title),
                                 );
@@ -355,7 +385,8 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
                       height: cellHeight,
                       width: tableWidth,
                       child: Row(
-                          children: table.columns.map((e) => Container(
+                          children: (_columnsToShow?.map((e) => table.columns[e]) ?? table.columns)
+                          .map((e) => Container(
                               decoration: BoxDecoration(
                                   border: Border.all(
                                     color: Colors.black12,
@@ -363,7 +394,7 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
                                     // strokeAlign: StrokeAlign.outside
                                   )
                               ),
-                              width: columnWidths[e.index],
+                              width: _computedColumnWidths[e.index],
                               child: _totalBuilder!.call(
                                   context,
                                   e,

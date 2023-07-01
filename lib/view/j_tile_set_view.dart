@@ -20,6 +20,10 @@ typedef EmptyStateBuilder<T> = Widget Function(BuildContext context, IJTileTable
 typedef OnCellSelect<T> = Function(IJTileTable<T> table, IJCell<T> cell);
 typedef DatasetBuilder<T> = Widget Function(BuildContext context, JTileDataset dataset, Widget datasetWidget, double width, double height);
 
+class TableViewOptions {
+  List<int>? columnsToShow;
+}
+
 class JTileDatasetView<T> extends StatefulWidget {
   const JTileDatasetView({Key? key,
     required this.dataset,
@@ -33,6 +37,7 @@ class JTileDatasetView<T> extends StatefulWidget {
     this.columnTitleBuilder,
     this.columnTitleHeight = 45,
     this.showColumns = true,
+    this.columnsToShow,
 
     // ------------- LABEL RELATED PROPS ---------------
     this.labelBuilder,
@@ -73,6 +78,7 @@ class JTileDatasetView<T> extends StatefulWidget {
   final ColumnTitleBuilder? columnTitleBuilder;
   final List<double> columnWidths;
   final bool showColumns;
+  final List<int>? columnsToShow;
 
   final double columnTitleHeight;
 
@@ -116,6 +122,7 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
   List<double> get _columnWidths => widget.columnWidths;
   double get columnTitleHeight => widget.columnTitleHeight;
   ColumnTitleBuilder? get _columnTitleBuilder => widget.columnTitleBuilder;
+  List<int>? get _columnsToShow => widget.columnsToShow;
 
   double get cellHeight => widget.cellHeight;
   DatasetCellBuilder<T>? get cellBuilder => widget.cellBuilder;
@@ -143,6 +150,24 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
   List<double> _datasetHeights = [];
   double _datasetWidth = 0;
 
+  List<double> get _computedColumnWidths {
+    List<double> widths = [];
+    widths.addAll(_columnWidths!);
+
+    if (_columnsToShow != null) {
+      widths = List.generate(widths.length, (index) {
+        if (_columnsToShow != null) {
+          if (_columnsToShow!.contains(index)) {
+            return widths[index];
+          }
+          return 0;
+        }
+        return widths[index];
+      });
+    }
+    return widths;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -153,25 +178,28 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
     List<IJTileTable<T>> tables = _dataset.dataset;
     _datasetHeights.clear();
 
-    final double tableWidth = _columnWidths.reduce((value, element) => value + element);
+    final double tableWidth = _computedColumnWidths.reduce((value, element) => value + element);
 
     return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           /// --------------------- COLUMN ROW ---------------------------------- ///
-          Container(
-            // color: Colors.green,
+          AnimatedContainer(
+            duration: Duration(milliseconds: 300),
             margin: EdgeInsets.only(left: _showTableLabels ? _tableLabelWidth : 0.0),
             height: columnTitleHeight,
             width: tableWidth,
             child: Row(
                 children: List.generate(
-                    tables.first.columns.length,
+                    _columnsToShow?.length ?? tables.first.columns.length,
                         (index) {
-                      final IJColumn column = tables.first.columns[index];
+                      int columnIndex = _columnsToShow?[index] ?? index;
+                      final IJColumn column = tables.first.columns[columnIndex];
+
                       return Container(
+                        key: ValueKey("column-${column.index}"),
                         alignment: Alignment.center,
-                        width: _columnWidths[index],
+                        width: _computedColumnWidths[columnIndex],
                         height: columnTitleHeight,
                         child: _columnTitleBuilder?.call(context, column) ?? Text(column.title),
                       );
@@ -188,7 +216,8 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
                   // there is something in the table body being rendered then we can show the divider lines,
                   // this only happens whenere there is a defined empty state, when there is some data or when an action button is defined
                   if (_showTableDividers && (table.cells.isNotEmpty || _emptyStateBuilder != null || actionButtonBuilder != null))
-                    Container(
+                    AnimatedContainer(
+                      duration: Duration(milliseconds: 300),
                       height: 30,
                       width: tableWidth,
                       margin: EdgeInsets.only(left: _showTableLabels ? _tableLabelWidth : 0.0),
@@ -209,6 +238,7 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
                     columnTitleHeight: columnTitleHeight,
                     leading: _showTableLabels ? labelBuilder?.call(context, table.name) : null,
                     showColumns: false,
+                    columnsToShow: _columnsToShow,
                     onSelect: (IJCell<T> cell) {
                       onSelect?.call(table, cell);
                     },
@@ -228,14 +258,15 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
                             return actionButtonBuilder!.call(context, table, column, startingAt);
                           }
                         : null,
-                    columnWidths: _columnWidths,
+                    columnWidths: _computedColumnWidths,
                     emptyState: _emptyStateBuilder?.call(context, table),
                   ),
                 ];
               }
           ).expand((element) => element).toList(),
           if (_datasetTotalBuilder != null)
-            Container(
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
               height: 30,
               margin: EdgeInsets.only(left: _showTableLabels ? _tableLabelWidth : 0.0),
               width: tableWidth,
@@ -254,12 +285,15 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
               children: [
                 if (labelBuilder != null)
                   labelBuilder!.call(context, 'total'),
-                ...List.generate(_columnWidths.length, (index) =>
-                    SizedBox(
-                      height: cellHeight,
-                      width: _columnWidths[index],
-                      child: _datasetTotalBuilder!.call(context, _dataset.dataset.first.columns[index], _dataset.getCellsByStartingPoint(index)),
-                    )
+                ...List.generate(_columnsToShow?.length ?? _columnWidths.length, (index) {
+                  int columnIndex = _columnsToShow?[index] ?? index;
+                  return SizedBox(
+                    height: cellHeight,
+                    width: _computedColumnWidths[columnIndex],
+                    child: _datasetTotalBuilder!.call(context, _dataset.dataset.first.columns[columnIndex], _dataset.getCellsByStartingPoint(columnIndex)),
+                  );
+                }
+
                 )
               ],
             )
