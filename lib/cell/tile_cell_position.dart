@@ -1,13 +1,13 @@
 import '../serializers/value_serializers.dart';
 
-class JPosition {
+class TileCellPosition {
 
-  const JPosition({ required this.start, required this.size });
+  const TileCellPosition({ required this.start, required this.size });
   final int start;
   final int size;
   int get end => start + size;
 
-  bool overlaps(JPosition other) {
+  bool overlaps(TileCellPosition other) {
     // Adjacent positions
     if (other.start >= end || start >= other.end) {
       return false;
@@ -24,7 +24,7 @@ class JPosition {
     return true;
   }
 
-  bool contains(JPosition other) {
+  bool contains(TileCellPosition other) {
     // one is contained within another
     if (start <= other.start && other.end <= end) {
       return true;
@@ -33,7 +33,7 @@ class JPosition {
     return false;
   }
 
-  bool isContainedBy(JPosition other) {
+  bool isContainedBy(TileCellPosition other) {
     if (other.start <= start && end <= other.end) {
       return true;
     }
@@ -41,7 +41,7 @@ class JPosition {
     return false;
   }
 
-  bool isAdjacentTo(JPosition other) {
+  bool isAdjacentTo(TileCellPosition other) {
     throw Exception("NOT IMPLEMENTED");
   }
 
@@ -50,19 +50,19 @@ class JPosition {
     "size": size
   };
 
-  static JPosition fromJson(Map<String, dynamic> json) {
-    return JPosition(
+  static TileCellPosition fromJson(Map<String, dynamic> json) {
+    return TileCellPosition(
         start: json["start"],
         size: json["size"]
     );
   }
 }
 
-abstract class IJCell<T> {
+abstract class TileCell<T> {
   String get uuid;
 
-  JPosition get location;
-  set location(JPosition newPosition);
+  TileCellPosition get location;
+  set location(TileCellPosition newPosition);
   T get value;
   set value(T entry);
 

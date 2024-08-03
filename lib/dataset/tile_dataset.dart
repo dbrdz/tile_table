@@ -6,8 +6,8 @@ import '../table/i_tile_jtable.dart';
 import '../table/j_tile_table.dart';
 import 'i_tile_dataset.dart';
 
-class JTileDataset<T> extends ITileDataset<T>  {
-  JTileDataset({ required this.name, required this.dataset, required this.columns });
+class TileDataset<T> extends ITileDataset<T>  {
+  TileDataset({ required this.name, required this.dataset, required this.columns });
 
   @override
   String name;
@@ -71,8 +71,8 @@ class JTileDataset<T> extends ITileDataset<T>  {
     "columns": columns.map((e) => e.toJson()).toList()
   };
 
-  static JTileDataset<T> fromJson<T>(Map<String, dynamic> json, ValueDeserializer<T> valueDeserializer) {
-    return JTileDataset<T>(
+  static TileDataset<T> fromJson<T>(Map<String, dynamic> json, ValueDeserializer<T> valueDeserializer) {
+    return TileDataset<T>(
         name: json["name"],
         dataset: (json["dataset"] as List<dynamic>).map<IJTileTable<T>>((e) => JTileTable.fromJson<T>(e, valueDeserializer)).toList(),
         columns: (json["columns"] as List<dynamic>).map((e) => JColumn.fromJson(e)).toList());

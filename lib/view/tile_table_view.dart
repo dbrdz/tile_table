@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../cell/i_jcell.dart';
-import '../column/i_jcolumn.dart';
-import '../table/i_tile_jtable.dart';
+import '../column/column.dart';
+import '../table/table.dart';
 import '../table/table_clipboard.dart';
 import 'jcell_group_container.dart';
 
 typedef CellBuilder<T> = Widget Function(BuildContext context,  IJCell<T> cell, CommitCallback commit, VoidCallback? onTap);
-typedef ColumnTitleBuilder = Widget Function(BuildContext context, IJColumn column);
-typedef ActionButtonBuilder = Widget Function(BuildContext context, IJColumn column, int startingIndex);
-typedef TotalBuilder<T> = Widget Function(BuildContext context, IJColumn column, List<IJCell<T>> columnCells);
+typedef ColumnTitleBuilder = Widget Function(BuildContext context, Column column);
+typedef ActionButtonBuilder = Widget Function(BuildContext context, Column column, int startingIndex);
+typedef TotalBuilder<T> = Widget Function(BuildContext context, Column column, List<IJCell<T>> columnCells);
 typedef CommitCallback = void Function(VoidCallback);
 typedef CellCallback<T> = void Function(IJCell<T>);
-typedef TileTableBuilder = Widget Function(BuildContext context, IJTileTable table, Widget tableWidget, double tableHeight, double tableWidth);
+typedef TileTableBuilder = Widget Function(BuildContext context, Table table, Widget tableWidget, double tableHeight, double tableWidth);
 
 class JTileTableView<T> extends StatefulWidget {
   const JTileTableView({
@@ -35,7 +35,7 @@ class JTileTableView<T> extends StatefulWidget {
     this.emptyState
   }) : super(key: key);
 
-  final IJTileTable<T> table;
+  final Table<T> table;
   final TileTableBuilder? builder;
   // The leading widget can be a widget used for table legends or description
   // and is rendered to the left of the table
@@ -69,7 +69,7 @@ class JTileTableView<T> extends StatefulWidget {
 class JTileTableViewState<T> extends State<JTileTableView<T>> {
 
   // ------------- DATA  ------------------
-  IJTileTable<T> get table => (widget.table);
+  Table<T> get table => (widget.table);
 
   // ------------- CHILD WIDGETS ------------------
   Widget? get _leading => widget.leading;
@@ -345,7 +345,7 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
                           children: List.generate(
                               table.columns.length,
                                   (index) {
-                                final IJColumn column = table.columns[index];
+                                final Column column = table.columns[index];
                                 return Container(
                                   alignment: Alignment.center,
                                   width: _computedColumnWidths[index],

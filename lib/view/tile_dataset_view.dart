@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 
 import '../cell/i_jcell.dart';
-import '../column/i_jcolumn.dart';
-import '../dataset/i_tile_dataset.dart';
-import '../dataset/j_tile_dataset.dart';
-import '../table/i_tile_jtable.dart';
+import '../column/column.dart';
+import '../dataset/dataset.dart';
+import '../dataset/tile_dataset.dart';
+import '../table/table.dart';
 import '../table/table_clipboard.dart';
 import 'j_tile_table_view.dart';
 
 typedef LabelBuilder<T> = Widget Function(BuildContext context, String);
-typedef DatasetCellBuilder<T> = Function(BuildContext context, IJTileTable<T> table, IJCell<T> cell, CommitCallback commit, VoidCallback? onTap);
+typedef DatasetCellBuilder<T> = Function(BuildContext context, Table<T> table, IJCell<T> cell, CommitCallback commit, VoidCallback? onTap);
 
-typedef TableTotalBuilder<T> = Widget Function(BuildContext context, IJTileTable<T> table, IJColumn, List<IJCell<T>>);
-typedef DatasetTotalBuilder<T> = Widget Function(BuildContext context, IJColumn, List<IJCell<T>>);
+typedef TableTotalBuilder<T> = Widget Function(BuildContext context, Table<T> table, Column, List<IJCell<T>>);
+typedef DatasetTotalBuilder<T> = Widget Function(BuildContext context, Column, List<IJCell<T>>);
 typedef ActionButtonBuilder<T> = Widget Function(
-    BuildContext context, IJTileTable<T> table, IJColumn, int cellStartingAt
+    BuildContext context, Table<T> table, Column, int cellStartingAt
     );
-typedef EmptyStateBuilder<T> = Widget Function(BuildContext context, IJTileTable<T> table);
-typedef OnCellSelect<T> = Function(IJTileTable<T> table, IJCell<T> cell);
-typedef DatasetBuilder<T> = Widget Function(BuildContext context, JTileDataset dataset, Widget datasetWidget, double width, double height);
+typedef EmptyStateBuilder<T> = Widget Function(BuildContext context, Table<T> table);
+typedef OnCellSelect<T> = Function(Table<T> table, IJCell<T> cell);
+typedef DatasetBuilder<T> = Widget Function(BuildContext context, TileDataset dataset, Widget datasetWidget, double width, double height);
 
 class TableViewOptions {
   List<int>? columnsToShow;
@@ -175,7 +175,7 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
 
   @override
   Widget build(BuildContext context) {
-    List<IJTileTable<T>> tables = _dataset.dataset;
+    List<Table<T>> tables = _dataset.dataset;
     _datasetHeights.clear();
 
     final double tableWidth = _computedColumnWidths.reduce((value, element) => value + element);
@@ -194,7 +194,7 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
                     _columnsToShow?.length ?? tables.first.columns.length,
                         (index) {
                       int columnIndex = _columnsToShow?[index] ?? index;
-                      final IJColumn column = tables.first.columns[columnIndex];
+                      final Column column = tables.first.columns[columnIndex];
 
                       return Container(
                         key: ValueKey("column-${column.index}"),
@@ -210,7 +210,7 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
           ...List.generate(
               tables.length,
                   (index) {
-                IJTileTable<T> table = tables[index];
+                Table<T> table = tables[index];
                 return [
                   // It doesn't make sense to show the divider lines if the table body is empty. Whenever
                   // there is something in the table body being rendered then we can show the divider lines,
@@ -242,7 +242,7 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
                     onSelect: (IJCell<T> cell) {
                       onSelect?.call(table, cell);
                     },
-                    builder: (BuildContext context, IJTileTable table, Widget datasetWidget, double height, double width) {
+                    builder: (BuildContext context, Table table, Widget datasetWidget, double height, double width) {
                       return datasetWidget;
                     },
                     totalBuilder: _tableTotalBuilder != null

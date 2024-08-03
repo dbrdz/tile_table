@@ -1,15 +1,16 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
-import 'package:tile_table/cell/i_jcell.dart';
+import 'package:tile_table/cell/tile_cell.dart';
+import 'package:tile_table/cell/tile_cell_position.dart';
 
 import '../table/table_clipboard.dart';
-import 'j_tile_table_view.dart';
+import 'tile_table_view.dart';
 import 'list_model.dart';
 
-typedef CellGroupCallback<T> = void Function(IJCell<T>);
+typedef CellGroupCallback<T> = void Function(TileCell<T>);
 
-class JCellGroupContainer<T> extends StatefulWidget {
-  const JCellGroupContainer({
+class CellGroupContainer<T> extends StatefulWidget {
+  const CellGroupContainer({
     Key? key,
     required this.cells,
     required this.commit,
@@ -26,7 +27,7 @@ class JCellGroupContainer<T> extends StatefulWidget {
   final double cellHeight;
   final CellBuilder<T>? cellBuilder;
   final CommitCallback commit;
-  final List<IJCell<T>> cells;
+  final List<TileCell<T>> cells;
   final TableClipboard<T>? selection;
 
   // ---------------- TABLE CALL BACKS -------------- //
@@ -37,17 +38,17 @@ class JCellGroupContainer<T> extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() {
-    return JCellGroupContainerState<T>();
+    return CellGroupContainerState<T>();
   }
 }
 
-class JCellGroupContainerState<T> extends State<JCellGroupContainer<T>> {
+class CellGroupContainerState<T> extends State<CellGroupContainer<T>> {
 
   // ------------------- PROPS -----------------------
   TableClipboard? get _selection => widget.selection;
   CellBuilder<T>? get cellBuilder => widget.cellBuilder;
   CommitCallback get _commit => widget.commit;
-  List<IJCell<T>> get _initialList => widget.cells;
+  List<TileCell<T>> get _initialList => widget.cells;
 
   double get cellHeight => widget.cellHeight;
 
@@ -58,7 +59,7 @@ class JCellGroupContainerState<T> extends State<JCellGroupContainer<T>> {
   // ------------------- EVENT HANDLERS ---------------
   CellGroupCallback<T>? get _onSelect => widget.onSelect;
 
-  Widget _buildRemovedItem(IJCell<T> item, BuildContext context, Animation<double> animation) {
+  Widget _buildRemovedItem(TileCell<T> item, BuildContext context, Animation<double> animation) {
     return SizeTransition(
         key: UniqueKey(),
         sizeFactor: animation,
@@ -69,11 +70,11 @@ class JCellGroupContainerState<T> extends State<JCellGroupContainer<T>> {
   }
 
   Widget _buildItem(BuildContext context, int index, Animation<double> animation) {
-    final IJCell<T> cell = _groupList[index];
+    final TileCell<T> cell = _groupList[index];
 
     final bool isSelected = _selection != null && _selection!.isCellSelected(cell);
     final bool isCopied = _selection != null && _selection!.isCellInClipBoard(cell);
-    final Color selectionColor = Theme.of(context).selectedRowColor;
+    final Color selectionColor = Theme.of(context).colorScheme.primary.withOpacity(0.2);
 
     Widget cellChild = cellBuilder?.call(
         context,
@@ -116,7 +117,7 @@ class JCellGroupContainerState<T> extends State<JCellGroupContainer<T>> {
 
   @override
   void initState() {
-    _groupList = ListModel<IJCell<T>>(
+    _groupList = ListModel<TileCell<T>>(
       listKey: _listKey,
       removedItemBuilder: _buildRemovedItem,
       initialItems: _initialList
