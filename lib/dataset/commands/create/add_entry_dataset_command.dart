@@ -1,25 +1,23 @@
+import 'package:colonel/command_base.dart';
 import 'package:colonel/command_exceptions.dart';
 
-import '../../../cell/i_jcell.dart';
-import '../../i_tile_dataset.dart';
-import '../i_j_dataset_command.dart';
+import '../../../cell/tile_cell.dart';
+import '../../tile_dataset.dart';
+import '../dataset_command.dart';
 
-class AddEntriesDatasetCommand<T> extends IJDatasetCommand<T> {
+class AddEntriesDatasetCommand<T> extends DatasetCommand<T> {
+  AddEntriesDatasetCommand({ required this.tableDataset, required this.entries, required this.index });
 
-  AddEntriesDatasetCommand({ required this.entries, required this.index });
-
-  final List<IJCell<T>> entries;
+  final List<TileCell<T>> entries;
   final int index;
-
-  ITileDataset<T>? _cachedDataset;
+  TileDataset<T> tableDataset;
 
   @override
-  Future<bool> execute(ITileDataset<T> element) {
-    _cachedDataset = element;
-    if (index < element.dataset.length && index >= 0) {
+  Future<bool> execute() {
+    if (index < tableDataset.dataset.length && index >= 0) {
       return Future(() {
         for (var entry in entries) {
-          element.dataset[index].addEntry(entry);
+          tableDataset.dataset[index].addEntry(entry);
         }
         return true;
       });
@@ -32,28 +30,27 @@ class AddEntriesDatasetCommand<T> extends IJDatasetCommand<T> {
 
   @override
   Future<bool> redo() {
-    if (_cachedDataset == null) {
+    if (tableDataset == null) {
       throw CommandRedoException();
     }
-
-    return execute(_cachedDataset!);
+    return execute().then((value) {
+      executionState = ExecutionState.redone;
+      return value;
+    });
   }
 
   @override
   Future<bool> undo() {
-    if (_cachedDataset == null) {
-      throw CommandUndoException();
-    }
-
-    if (index < _cachedDataset!.dataset.length && index >= 0) {
+    assertCanUndo();
+    if (index < tableDataset!.dataset.length && index >= 0) {
       return Future(() {
         for (var entry in entries) {
-          _cachedDataset!.dataset[index].removeEntry(entry);
+          tableDataset!.dataset[index].removeEntry(entry);
         }
         return true;
       });
     }
-
+    executionState = ExecutionState.undone;
     throw Exception("No table with index $index exists");
   }
 }

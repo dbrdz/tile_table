@@ -1,35 +1,35 @@
-import '../cell/i_jcell.dart';
-import '../column/i_jcolumn.dart';
-import '../column/jcolumn.dart';
-import '../serializers/value_serializers.dart';
-import '../table/i_tile_jtable.dart';
-import '../table/j_tile_table.dart';
-import 'i_tile_dataset.dart';
+import 'package:colonel/integration_mixin.dart';
 
-class TileDataset<T> extends ITileDataset<T>  {
+import '../cell/tile_cell.dart';
+import '../cell/tile_cell_position.dart';
+import '../column/tile_column.dart';
+import '../serializers/value_serializers.dart';
+import '../table/tile_table.dart';
+
+class TileDataset<T> with CommandMixin {
   TileDataset({ required this.name, required this.dataset, required this.columns });
 
   @override
   String name;
 
   @override
-  List<IJTileTable<T>> dataset;
+  List<TileTable<T>> dataset;
 
   @override
-  List<IJColumn> columns;
+  List<TileColumn> columns;
 
   @override
-  void addEntry(int tableIndex, IJCell<T> entry) {
+  void addEntry(int tableIndex, TileCell<T> entry) {
     dataset[tableIndex].addEntry(entry);
   }
 
   @override
-  void collapseCellLeft(IJCell<T> cell) {
+  void collapseCellLeft(TileCell<T> cell) {
     cell.shrink();
   }
 
   @override
-  void collapseCellRight(IJCell<T> cell) {
+  void collapseCellRight(TileCell<T> cell) {
     if (cell.location.end < columns.length) {
       cell.moveRight();
       cell.shrink();
@@ -37,32 +37,32 @@ class TileDataset<T> extends ITileDataset<T>  {
   }
 
   @override
-  void expandCell(IJCell cell) {
+  void expandCell(TileCell cell) {
     int newSize = columns.length;
     cell.setSize(newSize);
     cell.setStart(0);
   }
 
   @override
-  void expandCellLeft(IJCell cell) {
+  void expandCellLeft(TileCell cell) {
     cell.moveLeft();
   }
 
   @override
-  void expandCellRight(IJCell cell) {
+  void expandCellRight(TileCell cell) {
     if (cell.location.end < columns.length) {
       cell.grow();
     }
   }
 
   @override
-  List<IJCell<T>> getCellsByStartingPoint(int startingPoint) {
+  List<TileCell<T>> getCellsByStartingPoint(int startingPoint) {
     return dataset.expand((element) => element.cells)
-      .where((element) => element.location.contains(JPosition(start: startingPoint, size: 1)))
+      .where((element) => element.location.contains(TileCellPosition(start: startingPoint, size: 1)))
       .toList();
   }
 
-  void splitCell(int tableIndex, IJCell cell) => throw UnimplementedError();
+  void splitCell(int tableIndex, TileCell cell) => throw UnimplementedError();
   
   @override
   Map<String, dynamic> toJson(ValueSerializer<T> valueSerializer) => {
@@ -74,13 +74,13 @@ class TileDataset<T> extends ITileDataset<T>  {
   static TileDataset<T> fromJson<T>(Map<String, dynamic> json, ValueDeserializer<T> valueDeserializer) {
     return TileDataset<T>(
         name: json["name"],
-        dataset: (json["dataset"] as List<dynamic>).map<IJTileTable<T>>((e) => JTileTable.fromJson<T>(e, valueDeserializer)).toList(),
-        columns: (json["columns"] as List<dynamic>).map((e) => JColumn.fromJson(e)).toList());
+        dataset: (json["dataset"] as List<dynamic>).map<TileTable<T>>((e) => TileTable.fromJson<T>(e, valueDeserializer)).toList(),
+        columns: (json["columns"] as List<dynamic>).map((e) => TileColumn.fromJson(e)).toList());
   }
 
   @override
-  int removeEntry(IJCell<T> cell) {
-    IJTileTable<T> table = dataset.firstWhere((element) => element.cells.contains(cell));
+  int removeEntry(TileCell<T> cell) {
+    TileTable<T> table = dataset.firstWhere((element) => element.cells.contains(cell));
     table.removeEntry(cell);
     return dataset.indexOf(table);
   }

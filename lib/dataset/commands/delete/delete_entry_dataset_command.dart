@@ -1,40 +1,41 @@
+import 'package:colonel/command_base.dart';
 import 'package:colonel/command_exceptions.dart';
 
-import '../../../cell/i_jcell.dart';
-import '../../i_tile_dataset.dart';
-import '../i_j_dataset_command.dart';
+import '../../../cell/tile_cell.dart';
+import '../../tile_dataset.dart';
+import '../dataset_command.dart';
 
-class DeleteEntryDatasetCommand extends IJDatasetCommand {
-  DeleteEntryDatasetCommand({ required this.entry });
+class DeleteEntryDatasetCommand extends DatasetCommand {
+  DeleteEntryDatasetCommand({ required this.tableDataset, required this.entry });
 
-  final IJCell entry;
+  final TileCell entry;
   int? removedFrom; /// The index of the table that the cell was removed from.
-  ITileDataset? cachedDataset;
+  TileDataset tableDataset;
 
   @override
-  Future<bool> execute(ITileDataset element) {
-    cachedDataset = element;
-    removedFrom = element.removeEntry(entry);
+  Future<bool> execute() {
+    assertCanExecute();
+    removedFrom = tableDataset.removeEntry(entry);
+    executionState = ExecutionState.executed;
     return Future.value(true);
   }
 
   @override
-  // TODO: implement isUndoable
   bool get isUndoable => throw UnimplementedError();
 
   @override
   Future<bool> redo() {
-    if (cachedDataset != null) {
-      execute(cachedDataset!);
-      return Future.value(true);
-    }
-    throw CommandRedoException();
+    assertCanRedo();
+    return execute().then((value) {
+      executionState = ExecutionState.redone;
+      return value;
+    });
   }
 
   @override
   Future<bool> undo() {
-    if (cachedDataset != null) {
-      cachedDataset!.addEntry(removedFrom!, entry);
+    if (tableDataset != null) {
+      tableDataset!.addEntry(removedFrom!, entry);
       return Future.value(true);
     }
     throw CommandUndoException();

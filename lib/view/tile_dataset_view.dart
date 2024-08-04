@@ -1,31 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:tile_table/cell/tile_cell.dart';
+import 'package:tile_table/column/tile_column.dart';
+import 'package:tile_table/table/tile_table.dart';
 
-import '../cell/i_jcell.dart';
-import '../column/column.dart';
-import '../dataset/dataset.dart';
 import '../dataset/tile_dataset.dart';
-import '../table/table.dart';
 import '../table/table_clipboard.dart';
-import 'j_tile_table_view.dart';
+import 'tile_table_view.dart';
 
 typedef LabelBuilder<T> = Widget Function(BuildContext context, String);
-typedef DatasetCellBuilder<T> = Function(BuildContext context, Table<T> table, IJCell<T> cell, CommitCallback commit, VoidCallback? onTap);
+typedef DatasetCellBuilder<T> = Function(BuildContext context, TileTable<T> table, TileCell<T> cell, CommitCallback commit, VoidCallback? onTap);
 
-typedef TableTotalBuilder<T> = Widget Function(BuildContext context, Table<T> table, Column, List<IJCell<T>>);
-typedef DatasetTotalBuilder<T> = Widget Function(BuildContext context, Column, List<IJCell<T>>);
+typedef TableTotalBuilder<T> = Widget Function(BuildContext context, TileTable<T> table, TileColumn, List<TileCell<T>>);
+typedef DatasetTotalBuilder<T> = Widget Function(BuildContext context, TileColumn, List<TileCell<T>>);
 typedef ActionButtonBuilder<T> = Widget Function(
-    BuildContext context, Table<T> table, Column, int cellStartingAt
+    BuildContext context, TileTable<T> table, TileColumn, int cellStartingAt
     );
-typedef EmptyStateBuilder<T> = Widget Function(BuildContext context, Table<T> table);
-typedef OnCellSelect<T> = Function(Table<T> table, IJCell<T> cell);
+typedef EmptyStateBuilder<T> = Widget Function(BuildContext context, TileTable<T> table);
+typedef OnCellSelect<T> = Function(TileTable<T> table, TileCell<T> cell);
 typedef DatasetBuilder<T> = Widget Function(BuildContext context, TileDataset dataset, Widget datasetWidget, double width, double height);
 
 class TableViewOptions {
   List<int>? columnsToShow;
 }
 
-class JTileDatasetView<T> extends StatefulWidget {
-  const JTileDatasetView({Key? key,
+class TileDatasetView<T> extends StatefulWidget {
+  const TileDatasetView({Key? key,
     required this.dataset,
     required this.columnWidths,
 
@@ -70,7 +69,7 @@ class JTileDatasetView<T> extends StatefulWidget {
   final LabelBuilder? labelBuilder;
   final bool showTableLabels;
   final double tableLabelWidth;
-  final ITileDataset<T> dataset;
+  final TileDataset<T> dataset;
 
   final DatasetTotalBuilder<T>? datasetTotalBuilder;
   final TableTotalBuilder<T>? tableTotalBuilder;
@@ -104,17 +103,17 @@ class JTileDatasetView<T> extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() {
-    return JTileDatasetViewState<T>();
+    return TileDatasetViewState<T>();
   }
 }
 
-class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
+class TileDatasetViewState<T> extends State<TileDatasetView<T>> {
 
   LabelBuilder? get labelBuilder => widget.labelBuilder;
   bool get _showTableLabels => widget.showTableLabels;
   double get _tableLabelWidth => widget.tableLabelWidth;
 
-  ITileDataset<T> get _dataset => widget.dataset;
+  TileDataset<T> get _dataset => widget.dataset;
 
   TableTotalBuilder<T>? get _tableTotalBuilder => widget.tableTotalBuilder;
   DatasetTotalBuilder<T>? get _datasetTotalBuilder => widget.datasetTotalBuilder;
@@ -145,7 +144,7 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
   // ------------- EMPTY STATE BUILDER
   EmptyStateBuilder? get _emptyStateBuilder => widget.emptyStateBuilder;
 
-  final List<IJCell<T>> clipBoard = [];
+  final List<TileCell<T>> clipBoard = [];
 
   List<double> _datasetHeights = [];
   double _datasetWidth = 0;
@@ -175,7 +174,7 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
 
   @override
   Widget build(BuildContext context) {
-    List<Table<T>> tables = _dataset.dataset;
+    List<TileTable<T>> tables = _dataset.dataset;
     _datasetHeights.clear();
 
     final double tableWidth = _computedColumnWidths.reduce((value, element) => value + element);
@@ -194,7 +193,7 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
                     _columnsToShow?.length ?? tables.first.columns.length,
                         (index) {
                       int columnIndex = _columnsToShow?[index] ?? index;
-                      final Column column = tables.first.columns[columnIndex];
+                      final TileColumn column = tables.first.columns[columnIndex];
 
                       return Container(
                         key: ValueKey("column-${column.index}"),
@@ -210,7 +209,7 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
           ...List.generate(
               tables.length,
                   (index) {
-                Table<T> table = tables[index];
+                TileTable<T> table = tables[index];
                 return [
                   // It doesn't make sense to show the divider lines if the table body is empty. Whenever
                   // there is something in the table body being rendered then we can show the divider lines,
@@ -230,7 +229,7 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
                       ),
                     ),
                   /// --------------------- TABLE BODY  ---------------------------------- ///
-                  JTileTableView<T>(
+                  TileTableView<T>(
                     table: table,
                     backgroundColor: tableBackgroundColor,
                     selection: selection,
@@ -239,17 +238,17 @@ class JTileDatasetViewState<T> extends State<JTileDatasetView<T>> {
                     leading: _showTableLabels ? labelBuilder?.call(context, table.name) : null,
                     showColumns: false,
                     columnsToShow: _columnsToShow,
-                    onSelect: (IJCell<T> cell) {
+                    onSelect: (TileCell<T> cell) {
                       onSelect?.call(table, cell);
                     },
-                    builder: (BuildContext context, Table table, Widget datasetWidget, double height, double width) {
+                    builder: (BuildContext context, TileTable table, Widget datasetWidget, double height, double width) {
                       return datasetWidget;
                     },
                     totalBuilder: _tableTotalBuilder != null
                         ? (context, column, columnCells) => _tableTotalBuilder!.call(context, table, column, columnCells)
                         : null,
                     columnTitleBuilder: _columnTitleBuilder,
-                    cellBuilder: (BuildContext context, IJCell<T> cell, CommitCallback commit, VoidCallback? onTap) {
+                    cellBuilder: (BuildContext context, TileCell<T> cell, CommitCallback commit, VoidCallback? onTap) {
                       return cellBuilder?.call(context, table, cell, commit, onTap) ??
                           Text(cell.value.toString());
                     },

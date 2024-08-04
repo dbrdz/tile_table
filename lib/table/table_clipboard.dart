@@ -1,11 +1,10 @@
 import 'package:rxdart/rxdart.dart';
-
-import '../cell/i_jcell.dart';
+import 'package:tile_table/cell/tile_cell.dart';
 
 class TableSelection<T> {
   TableSelection({ required this.datasetIndex, required this.cell });
   final int datasetIndex;
-  final IJCell<T> cell;
+  final TileCell<T> cell;
 }
 
 class TableClipboard<T> {
@@ -14,7 +13,7 @@ class TableClipboard<T> {
   final BehaviorSubject listener = BehaviorSubject<TableClipboard>();
 
   List<TableSelection<T>> selectedCells;
-  List<IJCell<T>> clipboard = [];
+  List<TileCell<T>> clipboard = [];
   List<String> selectedActionButtons = [];
 
   void clearActionButtonSelection() {
@@ -43,23 +42,23 @@ class TableClipboard<T> {
     listener.add(this);
   }
 
-  void selectCell(IJCell<T> cell, int tableIndex) {
+  void selectCell(TileCell<T> cell, int tableIndex) {
     selectedActionButtons.clear();
     selectedCells.clear();
     selectedCells.add(TableSelection(datasetIndex: tableIndex, cell: cell));
     listener.add(this);
   }
 
-  void addToSelection(IJCell<T> cell, int tableIndex) {
+  void addToSelection(TileCell<T> cell, int tableIndex) {
     selectedCells.add(TableSelection(datasetIndex: tableIndex, cell: cell));
     listener.add(this);
   }
 
-  bool isCellSelected(IJCell<T> cell) {
+  bool isCellSelected(TileCell<T> cell) {
     return selectedCells.any((element) => element.cell == cell);
   }
 
-  bool isCellInClipBoard(IJCell<T> cell) {
+  bool isCellInClipBoard(TileCell<T> cell) {
     return clipboard.contains(cell);
   }
 

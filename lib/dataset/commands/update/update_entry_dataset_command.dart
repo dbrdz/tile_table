@@ -1,24 +1,21 @@
-import 'package:colonel/command_exceptions.dart';
-import 'package:tile_table/dataset/i_tile_dataset.dart';
+import '../../../cell/tile_cell.dart';
+import '../../../cell/tile_cell_position.dart';
+import '../../tile_dataset.dart';
+import '../dataset_command.dart';
 
-import '../../../cell/i_jcell.dart';
-import '../i_j_dataset_command.dart';
+class UpdateEntryDatasetCommand<T> extends DatasetCommand<T> {
+  UpdateEntryDatasetCommand({ required this.tableDataset, required this.oldEntry, required this.newEntry });
 
-class UpdateEntryDatasetCommand<T> extends IJDatasetCommand<T> {
-  UpdateEntryDatasetCommand({ required this.oldEntry, required this.newEntry });
+  final TileCell<T> oldEntry;
+  final TileCell<T> newEntry;
 
-  final IJCell<T> oldEntry;
-  final IJCell<T> newEntry;
-
-  ITileDataset<T>? _cachedDataset;
-
-  JPosition? oldEntryLocation;
+  TileDataset<T> tableDataset;
+  TileCellPosition? oldEntryLocation;
   T? oldEntryValue;
 
   @override
-  Future<bool> execute(ITileDataset<T> element) async {
-    _cachedDataset = element;
-    if (element.dataset.any((element) => element.cells.contains(oldEntry))) {
+  Future<bool> execute() async {
+    if (tableDataset.dataset.any((element) => element.cells.contains(oldEntry))) {
       oldEntryLocation = oldEntry.location;
       oldEntryValue = oldEntry.value;
 
@@ -34,17 +31,13 @@ class UpdateEntryDatasetCommand<T> extends IJDatasetCommand<T> {
 
   @override
   Future<bool> redo() {
-    if (_cachedDataset == null) {
-      throw CommandRedoException();
-    }
-    return execute(_cachedDataset!);
+   assertCanRedo();
+    return execute();
   }
 
   @override
   Future<bool> undo() {
-    if (_cachedDataset == null) {
-      throw CommandUndoException();
-    }
-    return UpdateEntryDatasetCommand<T>(newEntry: oldEntry, oldEntry: newEntry).execute(_cachedDataset!);
+    assertCanUndo();
+    return UpdateEntryDatasetCommand<T>(newEntry: oldEntry, oldEntry: newEntry, tableDataset: tableDataset).execute();
   }
 }

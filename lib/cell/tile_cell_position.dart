@@ -57,23 +57,3 @@ class TileCellPosition {
     );
   }
 }
-
-abstract class TileCell<T> {
-  String get uuid;
-
-  TileCellPosition get location;
-  set location(TileCellPosition newPosition);
-  T get value;
-  set value(T entry);
-
-  void setStart(int start);
-  void setSize(int newSize);
-
-  void moveLeft();
-  void moveRight();
-
-  void grow();
-  void shrink();
-
-  Map<String, dynamic> toJson(ValueSerializer<T> valueSerializer);
-}

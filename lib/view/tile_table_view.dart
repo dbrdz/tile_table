@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:tile_table/column/tile_column.dart';
+import 'package:tile_table/table/tile_table.dart';
 
-import '../cell/i_jcell.dart';
-import '../column/column.dart';
-import '../table/table.dart';
+import '../cell/tile_cell.dart';
+import '../cell/tile_cell_position.dart';
 import '../table/table_clipboard.dart';
-import 'jcell_group_container.dart';
+import 'cell_group_container.dart';
 
-typedef CellBuilder<T> = Widget Function(BuildContext context,  IJCell<T> cell, CommitCallback commit, VoidCallback? onTap);
-typedef ColumnTitleBuilder = Widget Function(BuildContext context, Column column);
-typedef ActionButtonBuilder = Widget Function(BuildContext context, Column column, int startingIndex);
-typedef TotalBuilder<T> = Widget Function(BuildContext context, Column column, List<IJCell<T>> columnCells);
+typedef CellBuilder<T> = Widget Function(BuildContext context,  TileCell<T> cell, CommitCallback commit, VoidCallback? onTap);
+typedef ColumnTitleBuilder = Widget Function(BuildContext context, TileColumn column);
+typedef ActionButtonBuilder = Widget Function(BuildContext context, TileColumn column, int startingIndex);
+typedef TotalBuilder<T> = Widget Function(BuildContext context, TileColumn column, List<TileCell<T>> columnCells);
 typedef CommitCallback = void Function(VoidCallback);
-typedef CellCallback<T> = void Function(IJCell<T>);
-typedef TileTableBuilder = Widget Function(BuildContext context, Table table, Widget tableWidget, double tableHeight, double tableWidth);
+typedef CellCallback<T> = void Function(TileCell<T>);
+typedef TileTableBuilder = Widget Function(BuildContext context, TileTable table, Widget tableWidget, double tableHeight, double tableWidth);
 
-class JTileTableView<T> extends StatefulWidget {
-  const JTileTableView({
+class TileTableView<T> extends StatefulWidget {
+  const TileTableView({
     Key? key,
     required this.table,
     this.builder,
@@ -35,7 +36,7 @@ class JTileTableView<T> extends StatefulWidget {
     this.emptyState
   }) : super(key: key);
 
-  final Table<T> table;
+  final TileTable<T> table;
   final TileTableBuilder? builder;
   // The leading widget can be a widget used for table legends or description
   // and is rendered to the left of the table
@@ -62,14 +63,14 @@ class JTileTableView<T> extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() {
-    return JTileTableViewState<T>();
+    return TileTableViewState<T>();
   }
 }
 
-class JTileTableViewState<T> extends State<JTileTableView<T>> {
+class TileTableViewState<T> extends State<TileTableView<T>> {
 
   // ------------- DATA  ------------------
-  Table<T> get table => (widget.table);
+  TileTable<T> get table => (widget.table);
 
   // ------------- CHILD WIDGETS ------------------
   Widget? get _leading => widget.leading;
@@ -145,11 +146,11 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
     _processedCells.clear();
     for (int i = 0; i < table.columns.length; i++) {
       Map<int, List<CellWrapper>> cellsMap = {};
-      final List<IJCell<T>> columnCells = table.getCellsByStartingPoint(i);
+      final List<TileCell<T>> columnCells = table.getCellsByStartingPoint(i);
 
       for (var cell in columnCells) {
         if (_columnsToShow != null) {
-          if (!_columnsToShow!.any((columnIndex) => cell.location.contains(JPosition(start: columnIndex, size: 1)))) {
+          if (!_columnsToShow!.any((columnIndex) => cell.location.contains(TileCellPosition(start: columnIndex, size: 1)))) {
             continue;
           }
         }
@@ -183,7 +184,7 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
     );
   }
 
-  TableSectionInfo? buildTableSection(int cellsStartingAt, JPosition? parentPosition, { bool buildSubsection = true, bool buildAdjacent = true }) {
+  TableSectionInfo? buildTableSection(int cellsStartingAt, TileCellPosition? parentPosition, { bool buildSubsection = true, bool buildAdjacent = true }) {
 
     if (
     (cellsStartingAt >= cellsByColumnAndSize.length ||
@@ -203,7 +204,7 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
         ? 0
         : cellsBySize.keys.reduce((value, element) => value > element ? value : element);
 
-    JPosition currentPosition = JPosition(start: cellsStartingAt, size: currentCellSize);
+    TileCellPosition currentPosition = TileCellPosition(start: cellsStartingAt, size: currentCellSize);
     List<CellWrapper> cells = cellsBySize.isEmpty ? [] : cellsBySize.remove(currentCellSize)!;
     _processedCells.addAll(cells);
 
@@ -267,13 +268,13 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (cells.isNotEmpty)
-                      JCellGroupContainer<T>(
+                      CellGroupContainer<T>(
                         selection: selection,
                         key: UniqueKey(),
                         cells: cells.whereType<EntryCellWrapper<T>>().map((e) => e.cell).toList(),
                         cellBuilder: _cellBuilder,
                         cellHeight: cellHeight,
-                        onSelect: (IJCell<T> cell) {
+                        onSelect: (TileCell<T> cell) {
                           onSelect?.call(cell);
                         },
                         commit: refresh,
@@ -345,7 +346,7 @@ class JTileTableViewState<T> extends State<JTileTableView<T>> {
                           children: List.generate(
                               table.columns.length,
                                   (index) {
-                                final Column column = table.columns[index];
+                                final TileColumn column = table.columns[index];
                                 return Container(
                                   alignment: Alignment.center,
                                   width: _computedColumnWidths[index],
@@ -421,7 +422,7 @@ abstract class CellWrapper {
 
 class EntryCellWrapper<T> extends CellWrapper {
   EntryCellWrapper({ required this.cell });
-  final IJCell<T> cell;
+  final TileCell<T> cell;
 }
 
 class ActionButtonWrapper extends CellWrapper {}

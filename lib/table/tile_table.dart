@@ -1,14 +1,12 @@
+import 'package:colonel/integration_mixin.dart';
 import 'package:rxdart/rxdart.dart';
-
-import '../cell/i_jcell.dart';
-import '../cell/j_cell.dart';
-import '../column/i_jcolumn.dart';
-import '../column/jcolumn.dart';
+import 'package:tile_table/cell/tile_cell.dart';
+import 'package:tile_table/cell/tile_cell_position.dart';
+import 'package:tile_table/column/tile_column.dart';
 import '../serializers/value_serializers.dart';
-import 'i_tile_jtable.dart';
 
-class JTileTable<T> extends IJTileTable<T> {
-  JTileTable({
+class TileTable<T> with CommandMixin {
+  TileTable({
     required this.name,
     required this.columns,
     required this.cells,
@@ -18,43 +16,43 @@ class JTileTable<T> extends IJTileTable<T> {
   String name;
 
   @override
-  List<IJCell<T>> cells = [];
+  List<TileCell<T>> cells = [];
 
   @override
-  List<IJColumn> columns = [];
+  List<TileColumn> columns = [];
 
   BehaviorSubject stream = BehaviorSubject();
 
   @override
-  void expandCell(IJCell cell) {
-    cell.location = JPosition(start: 0, size: columns.length);
+  void expandCell(TileCell cell) {
+    cell.location = TileCellPosition(start: 0, size: columns.length);
   }
 
   @override
-  void expandCellLeft(IJCell cell) {
+  void expandCellLeft(TileCell cell) {
     int currentCellSize = cell.location.size;
     int startingPoint = cell.location.start;
     if (startingPoint >= 1) {
-      cell.location = JPosition(start: cell.location.start - 1, size: currentCellSize + 1);
+      cell.location = TileCellPosition(start: cell.location.start - 1, size: currentCellSize + 1);
     }
   }
 
   @override
-  void expandCellRight(IJCell cell) {
+  void expandCellRight(TileCell cell) {
     int currentCellSize = cell.location.size;
     if (currentCellSize < columns.length) {
-      cell.location = JPosition(start: cell.location.start, size: currentCellSize + 1);
+      cell.location = TileCellPosition(start: cell.location.start, size: currentCellSize + 1);
     }
   }
 
   @override
-  List<IJCell<T>> getCellsByStartingPoint(int startingPoint) {
+  List<TileCell<T>> getCellsByStartingPoint(int startingPoint) {
     return cells.where((element) => element.location.start == startingPoint)
         .toList();
   }
 
   @override
-  void mergeCells(IJCell cell1, IJCell cell2) {
+  void mergeCells(TileCell cell1, TileCell cell2) {
     if (!cell1.location.overlaps(cell2.location) && !cell1.location.isAdjacentTo(cell2.location)) {
       throw Exception("Cells are not right next to each other");
     }
@@ -69,38 +67,38 @@ class JTileTable<T> extends IJTileTable<T> {
 
     int newSize = newEndingPoint - newStartingPoint;
 
-    cell1.location = JPosition(start: newStartingPoint, size: newSize);
-    cell2.location = JPosition(start: newStartingPoint, size: newSize);
+    cell1.location = TileCellPosition(start: newStartingPoint, size: newSize);
+    cell2.location = TileCellPosition(start: newStartingPoint, size: newSize);
   }
 
   @override
-  void collapseCellLeft(IJCell cell) {
+  void collapseCellLeft(TileCell cell) {
     int currentCellSize = cell.location.size;
     if (currentCellSize > 1) {
-      cell.location = JPosition(start: cell.location.start, size: currentCellSize - 1);
+      cell.location = TileCellPosition(start: cell.location.start, size: currentCellSize - 1);
     }
   }
 
   @override
-  void collapseCellRight(IJCell cell) {
+  void collapseCellRight(TileCell cell) {
     int currentCellSize = cell.location.size;
     if (currentCellSize > 1) {
-      cell.location = JPosition(start: cell.location.start + 1, size: currentCellSize - 1);
+      cell.location = TileCellPosition(start: cell.location.start + 1, size: currentCellSize - 1);
     }
   }
 
   @override
-  void splitCell(IJCell cell) {
+  void splitCell(TileCell cell) {
     int cellSize = cell.location.size;
     for (int i = 0; i < cellSize; i++) {
       cells.add(
-        JCell(value: cell.value, location: JPosition(start: cell.location.start + i, size: 1))
+        TileCell(value: cell.value, location: TileCellPosition(start: cell.location.start + i, size: 1))
       );
     }
   }
 
   @override
-  void addEntry(IJCell<T> entry) {
+  void addEntry(TileCell<T> entry) {
     commandRx.add(null);
     cells.add(entry);
   }
@@ -112,16 +110,16 @@ class JTileTable<T> extends IJTileTable<T> {
     "cells": cells.map((e) => e.toJson(valueSerializer)).toList(),
   };
 
-  static JTileTable<T> fromJson<T>(Map<String, dynamic> json, ValueDeserializer<T> valueDeserializer) {
-    return JTileTable<T>(
+  static TileTable<T> fromJson<T>(Map<String, dynamic> json, ValueDeserializer<T> valueDeserializer) {
+    return TileTable<T>(
       name: json["name"],
-      columns: json["columns"].map<IJColumn>((e) => JColumn.fromJson(e)).toList(),
-      cells: (json["cells"] as Iterable<dynamic>).map<IJCell<T>>((e) => JCell.fromJson<T>(e, valueDeserializer)).toList()
+      columns: json["columns"].map<TileColumn>((e) => TileColumn.fromJson(e)).toList(),
+      cells: (json["cells"] as Iterable<dynamic>).map<TileCell<T>>((e) => TileCell.fromJson<T>(e, valueDeserializer)).toList()
     );
   }
 
   @override
-  void removeEntry(IJCell<T> entry) {
+  void removeEntry(TileCell<T> entry) {
     cells.remove(entry);
   }
 

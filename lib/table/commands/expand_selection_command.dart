@@ -1,21 +1,21 @@
-import 'package:colonel/command_exceptions.dart';
+import 'package:colonel/command_base.dart';
+import 'package:tile_table/table/tile_table.dart';
+import '../../cell/tile_cell.dart';
+import 'tile_table_command.dart';
 
-import '../../cell/i_jcell.dart';
-import '../i_tile_jtable.dart';
-import 'i_j_tile_table_command.dart';
+class ExpandSelectionCommand extends TileTableCommand {
+  ExpandSelectionCommand({ required this.selectedCells, required this.table });
 
-class ExpandSelectionCommand extends IJTileTableCommand {
-  ExpandSelectionCommand({ required this.selectedCells });
-
-  final List<IJCell> selectedCells;
-  IJTileTable? _table;
+  final List<TileCell> selectedCells;
+  final TileTable table;
 
   @override
-  Future<bool> execute(IJTileTable element) {
-    _table = element;
+  Future<bool> execute() {
+    assertCanExecute();
     for (var cell in selectedCells) {
-      element.expandCellRight(cell);
+      table.expandCellRight(cell);
     }
+    executionState = ExecutionState.executed;
     return Future.value(true);
   }
 
@@ -24,21 +24,21 @@ class ExpandSelectionCommand extends IJTileTableCommand {
 
   @override
   Future<bool> redo() {
-    if (_table != null) {
-      return execute(_table!);
-    }
-    throw CommandRedoException();
+    assertCanRedo();
+    return execute().then((value) {
+      executionState = ExecutionState.redone;
+      return value;
+    });
   }
 
   @override
   Future<bool> undo() {
-    if (_table != null) {
-      for (var cell in selectedCells) {
-        _table!.collapseCellLeft(cell);
-      }
-      return Future.value(true);
+    assertCanUndo();
+    for (var cell in selectedCells) {
+      table.collapseCellLeft(cell);
     }
-    throw CommandUndoException();
+    executionState = ExecutionState.undone;
+    return Future.value(true);
   }
 
 }

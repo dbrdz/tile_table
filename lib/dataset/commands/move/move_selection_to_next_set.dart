@@ -1,29 +1,29 @@
-import 'package:colonel/command_exceptions.dart';
-
-import '../../../cell/i_jcell.dart';
-import '../../i_tile_dataset.dart';
-import '../i_j_dataset_command.dart';
+import 'package:colonel/command_base.dart';
+import '../../../cell/tile_cell.dart';
+import '../../tile_dataset.dart';
+import '../dataset_command.dart';
 import 'move_selection_to_previous_set.dart';
 
-class MoveSelectionToNextSet extends IJDatasetCommand {
+class MoveSelectionToNextSet extends DatasetCommand {
 
-  MoveSelectionToNextSet({ required this.selectedCells });
+  MoveSelectionToNextSet({ required this.tableDataset, required this.selectedCells });
 
-  final List<IJCell> selectedCells;
+  final List<TileCell> selectedCells;
   int? tableIndex;
-  ITileDataset? _cachedDataset;
+  TileDataset tableDataset;
 
   @override
-  Future<bool> execute(ITileDataset element) {
+  Future<bool> execute() {
+    assertCanExecute();
     return Future(() {
-      _cachedDataset = element;
       for (var cell in selectedCells) {
-        tableIndex = element.dataset.indexWhere((element) => element.cells.contains(cell));
-        if (tableIndex! < (element.dataset.length - 1)){
-          element.dataset[tableIndex!].removeEntry(cell);
-          element.dataset[tableIndex! + 1].addEntry(cell);
+        tableIndex = tableDataset.dataset.indexWhere((element) => element.cells.contains(cell));
+        if (tableIndex! < (tableDataset.dataset.length - 1)){
+          tableDataset.dataset[tableIndex!].removeEntry(cell);
+          tableDataset.dataset[tableIndex! + 1].addEntry(cell);
         }
       }
+      executionState = ExecutionState.executed;
       return true;
     });
   }
@@ -33,19 +33,20 @@ class MoveSelectionToNextSet extends IJDatasetCommand {
 
   @override
   Future<bool> redo() {
-    if (_cachedDataset != null) {
-      execute(_cachedDataset!);
-    }
-    throw CommandRedoException();
+    assertCanRedo();
+    return execute().then((value) {
+      executionState = ExecutionState.redone;
+      return value;
+    });
   }
 
   @override
   Future<bool> undo() {
-    if (_cachedDataset != null) {
-      MoveSelectionToPreviousSet(selectedCells: selectedCells).execute(_cachedDataset!);
-    }
-
-    throw CommandUndoException();
+    assertCanUndo();
+    return MoveSelectionToPreviousSet(tableDataset: tableDataset, selectedCells: selectedCells).execute()
+      .then((value) {
+        executionState = ExecutionState.undone;
+        return value;
+      });
   }
-
 }

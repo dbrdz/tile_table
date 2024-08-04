@@ -1,8 +1,7 @@
 import '../cell/tile_cell_position.dart';
-import 'tile_column.dart';
 
-class TileTableColumn implements TileColumn {
-  TileTableColumn({ required this.index, required this.title });
+class TileColumn {
+  TileColumn({ required this.index, required this.title });
 
   @override
   int index;
@@ -19,8 +18,8 @@ class TileTableColumn implements TileColumn {
     "title": title
   };
 
-  static TileTableColumn fromJson(Map<String, dynamic> json) {
-    return TileTableColumn(
+  static TileColumn fromJson(Map<String, dynamic> json) {
+    return TileColumn(
         index: json["index"],
         title: json["title"]);
   }

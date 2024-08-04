@@ -1,21 +1,21 @@
-import 'package:colonel/command_exceptions.dart';
+import 'package:colonel/command_base.dart';
+import '../../../cell/tile_cell.dart';
+import '../../tile_dataset.dart';
+import '../dataset_command.dart';
 
-import '../../../cell/i_jcell.dart';
-import '../../i_tile_dataset.dart';
-import '../i_j_dataset_command.dart';
+class ShrinkSelectionDatasetCommand extends DatasetCommand {
+  ShrinkSelectionDatasetCommand({ required this.tableDataset, required this.selectedCells });
 
-class ShrinkSelectionDatasetCommand extends IJDatasetCommand {
-  ShrinkSelectionDatasetCommand({ required this.selectedCells });
+  final List<TileCell> selectedCells;
 
-  final List<IJCell> selectedCells;
-
-  ITileDataset? _cachedDataset;
+  TileDataset tableDataset;
   @override
-  Future<bool> execute(ITileDataset element) {
-    _cachedDataset = element;
+  Future<bool> execute() {
+    assertCanExecute();
     for (var cell in selectedCells) {
-      element.collapseCellLeft(cell);
+      tableDataset.collapseCellLeft(cell);
     }
+    executionState = ExecutionState.executed;
     return Future.value(true);
   }
 
@@ -24,20 +24,20 @@ class ShrinkSelectionDatasetCommand extends IJDatasetCommand {
 
   @override
   Future<bool> redo() {
-    if (_cachedDataset != null) {
-      return execute(_cachedDataset!);
-    }
-    throw CommandRedoException();
+    assertCanRedo();
+    return execute().then((value) {
+      executionState = ExecutionState.redone;
+      return value;
+    });
   }
 
   @override
   Future<bool> undo() {
-    if (_cachedDataset != null) {
-      for (var cell in selectedCells) {
-        _cachedDataset!.expandCellRight(cell);
-      }
-      return Future.value(true);
+    assertCanUndo();
+    for (var cell in selectedCells) {
+      tableDataset.expandCellRight(cell);
     }
-    throw CommandUndoException();
+    executionState = ExecutionState.undone;
+    return Future.value(true);
   }
 }
