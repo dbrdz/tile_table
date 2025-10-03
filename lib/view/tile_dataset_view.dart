@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tile_table/cell/tile_cell.dart';
 import 'package:tile_table/column/tile_column.dart';
 import 'package:tile_table/table/tile_table.dart';
+import 'package:tile_table/view/simple_tile_table_view.dart';
 
 import '../dataset/tile_dataset.dart';
 import '../table/table_clipboard.dart';
@@ -220,8 +221,8 @@ class TileDatasetViewState<T> extends State<TileDatasetView<T>> {
                       height: 30,
                       width: tableWidth,
                       margin: EdgeInsets.only(left: _showTableLabels ? _tableLabelWidth : 0.0),
-                      child: Row(
-                        children: const [
+                      child: const Row(
+                        children: [
                           Expanded(
                             child: Divider(),
                           ),
@@ -229,7 +230,7 @@ class TileDatasetViewState<T> extends State<TileDatasetView<T>> {
                       ),
                     ),
                   /// --------------------- TABLE BODY  ---------------------------------- ///
-                  TileTableView<T>(
+                  SimpleTileTableView<T>(
                     table: table,
                     backgroundColor: tableBackgroundColor,
                     selection: selection,
@@ -269,8 +270,8 @@ class TileDatasetViewState<T> extends State<TileDatasetView<T>> {
               height: 30,
               margin: EdgeInsets.only(left: _showTableLabels ? _tableLabelWidth : 0.0),
               width: tableWidth,
-              child: Row(
-                children: const [
+              child: const Row(
+                children: [
                   Expanded(
                     child:  Divider(),
                   ),
